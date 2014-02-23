@@ -505,6 +505,30 @@ class ChartView extends CompositeElement
         @optionElements.toggleOrigin =
             $(forEachAxisOptionElement "toggleOrigin", "origin", installToggleHandler)
                 .toggleClass("disabled", true)
+        
+        chartOptionsBoxAnimationDuration = 400
+        @optionElements.chartOptionsBox.on("click", "i.icon-plus", (e) =>
+            $(e.target).addClass("icon-remove").removeClass("icon-plus")
+            @optionElements.chartOptionsBox.animate({
+                left: "0px"
+            }, {
+                duration: chartOptionsBoxAnimationDuration,
+                specialEasing: {
+                  left: "swing" # TODO: Replace with nicer easing from JQuery UI
+                }
+            }))
+
+        @optionElements.chartOptionsBox.on("click", "i.icon-remove", (e) =>
+            $(e.target).addClass("icon-plus").removeClass("icon-remove")
+            @optionElements.chartOptionsBox.animate({
+                left: "-480px"
+            }, {
+                duration: chartOptionsBoxAnimationDuration,
+                specialEasing: {
+                  left: "swing" # TODO: Replace with nicer easing from JQuery UI
+                }
+            }))
+
 
     @AXIS_NAMES: "X Y".trim().split(/\s+/)
 
