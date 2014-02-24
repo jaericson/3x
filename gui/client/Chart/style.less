@@ -34,22 +34,23 @@ overflow: hidden;
   font-size: 14px;
 }
 
-#chart-options-box {
+#chart-options-box, #chart-options-box-dummy {
   position: absolute;
-  height: 500px;
+  height: 200px;
   width: 500px;
   left: -480px;
-  top: 150px;
+  top: 160px;
 }
 
-#chart-options-box-body {
+#chart-options-box-body, #chart-options-box-body-dummy {
   width: 480px;
-  height: 500px;
+  height: 200px;
   background-color: #999;
   float: left;
   opacity: 0.9;
   border-radius: 4px 0px 4px 4px;
   -webkit-border-radius: 4px 0px 4px 4px;
+  position: relative;
 }
 
 #chart-options-box-btn {
@@ -69,7 +70,6 @@ overflow: hidden;
 
 #chart-options-targets {
   position: relative;
-  top: -30px;
 }
 
 .target-option {
@@ -97,6 +97,7 @@ overflow: hidden;
   -webkit-border-radius: 4px;
   color: white;
   text-align: center;
+  position: relative;
 }
 
 .projectile-option:hover {
