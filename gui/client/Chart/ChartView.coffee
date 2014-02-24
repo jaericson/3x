@@ -588,7 +588,7 @@ class ChartView extends CompositeElement
     @PROJECTILE_OPTION: $("""
         <script type="text/x-jsrender">
             {{for variables}}
-                <div class="projectile-option"><i class="icon icon-{{if isMeasured}}dashboard{{else}}tasks{{/if}}"></i>{{>name}}</div>
+                <div class="projectile-option"><i class="icon icon-{{if isMeasured}}dashboard{{else}}tasks{{/if}}"></i> {{>name}}</div>
             {{/for}}
         </script>
         """)
@@ -771,7 +771,23 @@ class ChartView extends CompositeElement
             .append(@constructor.PROJECTILE_OPTION.render(
                 variables: remainingVariables
             )) if remainingVariables.length > 0
-        $(".projectile-option").draggable()
+        $(".projectile-option").draggable({
+            stop: (e) ->
+                projectile = $(e.target)
+                if projectile.data("dropped") is true
+                    projectile.data("dropped", false)
+                else 
+                    projectile.animate({
+                        "left": "0px"
+                        "top": "0px"
+                        }, {
+                        duration: 400,
+                        specialEasing: {
+                          left: "swing"
+                          top: "swing"
+                        }
+                    })
+        })
 
         # add in target options based on width of projectiles, and make them droppable
         maxWidth = 50
@@ -796,11 +812,66 @@ class ChartView extends CompositeElement
             accept: ".projectile-option"
             activeClass: "droppable-active",
             hoverClass: "droppable-hover",
-            drop: (e) =>
-                $(e.target).addClass("droppable-highlight")
-            out: (e) =>
+            drop: (e) ->
+                target = $(e.target)
+                projectile = $(e.toElement)
+                projectile.data("dropped", true)
+                target.addClass("droppable-highlight")
+                offset = target.offset() # .top, .left
+                w = target.outerWidth()
+                h = target.outerHeight()
+                offset2 = projectile.offset()
+                w2 = projectile.outerWidth()
+                h2 = projectile.outerHeight()
+                l = +projectile.css("left").replace("px", "")
+                t = +projectile.css("top").replace("px", "")
+                deltaY = (offset.top + ((h - h2) / 2)) - offset2.top
+                deltaX = (offset.left + ((w - w2) / 2)) - offset2.left
+                projectile.animate({
+                    "left": (l+deltaX) + "px"
+                    "top": (t+deltaY) + "px"
+                    }, {
+                    duration: 400,
+                    specialEasing: {
+                      left: "swing" # TODO: Replace with nicer easing from JQuery UI
+                      top: "swing"
+                    }
+                })
+                # marg = +$(e.toElement).css("margin").replace("px", "") * 2
+                # deltaY = offset.top - offset2.top
+                # deltaX = offset.left - offset2.left
+                # $(e.toElement).data("original", {width: w2, height: h2}) 
+                # $(e.toElement).animate({
+                #     "left": (l+deltaX) + "px"
+                #     "top": (t+deltaY) + "px"
+                #     "width": (w - marg) + "px"
+                #     "height": (h - marg) + "px"
+                #     }, {
+                #     duration: 400,
+                #     specialEasing: {
+                #       left: "swing" # TODO: Replace with nicer easing from JQuery UI
+                #       top: "swing"
+                #       width: "swing"
+                #       height: "swing"
+                #     }
+                # })
+            out: (e) ->
                 $(e.target).removeClass("droppable-highlight")
         })
+
+
+
+        # @optionElements.chartOptionsBox.animate({
+        #         left: "0px"
+        #     }, {
+        #         duration: chartOptionsBoxAnimationDuration,
+        #         specialEasing: {
+        #           left: "swing" # TODO: Replace with nicer easing from JQuery UI
+        #         }
+        #     }))
+
+
+
 
         do @display
 
