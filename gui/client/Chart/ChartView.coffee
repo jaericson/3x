@@ -512,23 +512,39 @@ class ChartView extends CompositeElement
         chartOptionsBoxAnimationDuration = 400
         @optionElements.chartOptionsBox.on("click", "i.icon-plus", (e) =>
             $(e.target).addClass("icon-remove").removeClass("icon-plus")
-            @optionElements.chartOptionsBox.animate({
-                left: "0px"
+            @optionElements.chartOptionsBox.find("#chart-options-box-btn, .projectile-option:not(.isOnTarget)").animate({
+                left: "480px"
             }, {
                 duration: chartOptionsBoxAnimationDuration,
                 specialEasing: {
-                  left: "swing" # TODO: Replace with nicer easing from JQuery UI
+                  left: "easeOutQuad"
+                }
+            })
+            @optionElements.dummyBox.animate({
+                left: "480px"
+            }, {
+                duration: chartOptionsBoxAnimationDuration,
+                specialEasing: {
+                  left: "easeOutQuad"
                 }
             }))
 
         @optionElements.chartOptionsBox.on("click", "i.icon-remove", (e) =>
             $(e.target).addClass("icon-plus").removeClass("icon-remove")
-            @optionElements.chartOptionsBox.animate({
-                left: "-480px"
+            @optionElements.chartOptionsBox.find("#chart-options-box-btn, .projectile-option:not(.isOnTarget)").animate({
+                left: "0px"
             }, {
                 duration: chartOptionsBoxAnimationDuration,
                 specialEasing: {
-                  left: "swing" # TODO: Replace with nicer easing from JQuery UI
+                  left: "easeOutQuad"
+                }
+            })
+            @optionElements.dummyBox.animate({
+                left: "0px"
+            }, {
+                duration: chartOptionsBoxAnimationDuration,
+                specialEasing: {
+                  left: "easeOutQuad"
                 }
             }))
 
@@ -588,7 +604,8 @@ class ChartView extends CompositeElement
     @PROJECTILE_OPTION: $("""
         <script type="text/x-jsrender">
             {{for variables}}
-                <div class="projectile-option"><i class="icon icon-{{if isMeasured}}dashboard{{else}}tasks{{/if}}"></i> {{>name}}</div>
+                <div class="projectile-option{{if isRatio}} ratioVariable{{/if}}">
+                    <i class="icon icon-{{if isMeasured}}dashboard{{else}}tasks{{/if}}"></i> {{>name}}</div>
             {{/for}}
         </script>
         """)
@@ -764,6 +781,8 @@ class ChartView extends CompositeElement
             ))
 
         # add in projectile options and make them draggable
+        for v in remainingVariables
+            v.isRatio = utils.isRatio v.type
         @optionElements.chartOptionsBox
             .find("div.projectile-option").remove()
         @optionElements.chartOptionsBox
@@ -772,13 +791,13 @@ class ChartView extends CompositeElement
                 variables: remainingVariables
             )) if remainingVariables.length > 0
         $(".projectile-option").draggable({
-            stop: (e) ->
+            stop: (e) =>
                 projectile = $(e.target)
                 if projectile.data("dropped") is true
                     projectile.data("dropped", false)
                 else 
                     projectile.animate({
-                        "left": "0px"
+                        "left": +@optionElements.dummyBox.css("left").replace("px", "")
                         "top": "0px"
                         }, {
                         duration: 400,
@@ -808,14 +827,20 @@ class ChartView extends CompositeElement
                 variables: targetVariables
             )) if remainingVariables.length > 0
 
-        $(".target-option").droppable({
+        $(".target-option").eq(0).droppable({
+            accept: ".projectile-option.ratioVariable"
+        })
+        $(".target-option").eq(1).droppable({
             accept: ".projectile-option"
+        })
+        $(".target-option").droppable({
             activeClass: "droppable-active",
             hoverClass: "droppable-hover",
-            drop: (e) ->
+            drop: (e, ui) ->
                 target = $(e.target)
-                projectile = $(e.toElement)
+                projectile = $(ui.draggable)
                 projectile.data("dropped", true)
+                projectile.addClass("isOnTarget")
                 target.addClass("droppable-highlight")
                 offset = target.offset() # .top, .left
                 w = target.outerWidth()
@@ -833,15 +858,15 @@ class ChartView extends CompositeElement
                     }, {
                     duration: 400,
                     specialEasing: {
-                      left: "swing" # TODO: Replace with nicer easing from JQuery UI
+                      left: "swing"
                       top: "swing"
-                    }
+                    },
                 })
-                # marg = +$(e.toElement).css("margin").replace("px", "") * 2
+                # marg = +projectile.css("margin").replace("px", "") * 2
                 # deltaY = offset.top - offset2.top
                 # deltaX = offset.left - offset2.left
-                # $(e.toElement).data("original", {width: w2, height: h2}) 
-                # $(e.toElement).animate({
+                # projectile.data("original", {width: w2, height: h2}) 
+                # projectile.animate({
                 #     "left": (l+deltaX) + "px"
                 #     "top": (t+deltaY) + "px"
                 #     "width": (w - marg) + "px"
@@ -849,14 +874,17 @@ class ChartView extends CompositeElement
                 #     }, {
                 #     duration: 400,
                 #     specialEasing: {
-                #       left: "swing" # TODO: Replace with nicer easing from JQuery UI
+                #       left: "swing"
                 #       top: "swing"
                 #       width: "swing"
                 #       height: "swing"
                 #     }
                 # })
-            out: (e) ->
-                $(e.target).removeClass("droppable-highlight")
+            out: (e, ui) ->
+                target = $(e.target)
+                projectile = $(ui.draggable)
+                target.removeClass("droppable-highlight")
+                projectile.removeClass("isOnTarget")
         })
 
 
@@ -866,7 +894,7 @@ class ChartView extends CompositeElement
         #     }, {
         #         duration: chartOptionsBoxAnimationDuration,
         #         specialEasing: {
-        #           left: "swing" # TODO: Replace with nicer easing from JQuery UI
+        #           left: "swing"
         #         }
         #     }))
 
