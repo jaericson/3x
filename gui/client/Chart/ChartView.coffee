@@ -2,6 +2,9 @@ $ = require "jquery"
 _ = require "underscore"
 d3 = require "d3"
 require "jsrender"
+require "jquery.ui.droppable"
+require "jquery.ui.draggable"
+require "jquery.ui.effect"
 
 _3X_ = require "3x"
 {
@@ -108,6 +111,19 @@ class ChartView extends CompositeElement
                   left: "swing" # TODO: Replace with nicer easing from JQuery UI
                 }
             }))
+
+        $(".projectile-x").draggable()
+
+        $(".target-x").droppable({
+            accept: ".projectile-x"
+            activeClass: "droppable-active",
+            hoverClass: "droppable-hover",
+            drop: (e) =>
+                $(e.target).addClass("droppable-highlight")
+            out: (e) =>
+                $(e.target).removeClass("droppable-highlight")
+        })
+
 
 
     @AXIS_NAMES: "X Y".trim().split(/\s+/)

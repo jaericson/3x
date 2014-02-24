@@ -167,6 +167,9 @@ relsymlink extern/jquery-ui/dist/jquery-ui-*/ui/jquery.ui.mouse.js              
 relsymlink extern/jquery-ui/dist/jquery-ui-*/ui/jquery.ui.widget.js                                  .
 relsymlink extern/jquery-ui/dist/jquery-ui-*/ui/jquery.ui.selectable.js                              .
 relsymlink extern/jquery-ui/dist/jquery-ui-*/ui/jquery.ui.sortable.js                                .
+relsymlink extern/jquery-ui/dist/jquery-ui-*/ui/jquery.ui.droppable.js                               .
+relsymlink extern/jquery-ui/dist/jquery-ui-*/ui/jquery.ui.draggable.js                               .
+relsymlink extern/jquery-ui/dist/jquery-ui-*/ui/jquery.ui.effect.js                                  .
 relsymlink extern/jsrender/jsrender.js                                                               .
 relsymlink extern/knockout/build/output/knockout-latest.debug.js                                     ./knockout.js
 relsymlink extern/d3/d3.js                                                                           .
