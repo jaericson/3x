@@ -112,20 +112,6 @@ class ChartView extends CompositeElement
                 }
             }))
 
-        $(".projectile-x").draggable()
-
-        $(".target-x").droppable({
-            accept: ".projectile-x"
-            activeClass: "droppable-active",
-            hoverClass: "droppable-hover",
-            drop: (e) =>
-                $(e.target).addClass("droppable-highlight")
-            out: (e) =>
-                $(e.target).removeClass("droppable-highlight")
-        })
-
-
-
     @AXIS_NAMES: "X Y".trim().split(/\s+/)
 
     persist: =>
@@ -175,6 +161,22 @@ class ChartView extends CompositeElement
         <script type="text/x-jsrender">
             {{for names}}
                 <li class="chart-type-li"><a href="#"><i class="icon icon-signal"></i> {{>#data}}</a></li>
+            {{/for}}
+        </script>
+        """)
+
+    @PROJECTILE_OPTION: $("""
+        <script type="text/x-jsrender">
+            {{for variables}}
+                <div class="projectile-option"><i class="icon icon-{{if isMeasured}}dashboard{{else}}tasks{{/if}}"></i>{{>name}}</div>
+            {{/for}}
+        </script>
+        """)
+
+    @TARGET_OPTION: $("""
+        <script type="text/x-jsrender">
+            {{for variables}}
+                <div class="target-option" style="width:{{>width}}px">{{>name}}</div>
             {{/for}}
         </script>
         """)
@@ -340,6 +342,45 @@ class ChartView extends CompositeElement
             .append(@constructor.CHART_PICK_CONTROL_SKELETON.render(
                 names: chartTypes
             ))
+
+        # add in projectile options and make them draggable
+        @optionElements.chartOptionsBox
+            .find("div.projectile-option").remove()
+        @optionElements.chartOptionsBox
+            .find("#chart-options-box-body")
+            .append(@constructor.PROJECTILE_OPTION.render(
+                variables: remainingVariables
+            )) if remainingVariables.length > 0
+        $(".projectile-option").draggable()
+
+        # add in target options based on width of projectiles, and make them droppable
+        maxWidth = 50
+        for projectile in @optionElements.chartOptionsBox.find("div.projectile-option")
+            w = $(projectile).width()
+            if w > maxWidth then maxWidth = w
+        maxWidth += 10 # buffer room
+        targetNames = ["Y Axis", "X Axis"]
+        targetVariables = []
+        for name in targetNames
+            targetVariables.push(
+                name: name
+                width: maxWidth
+            )
+        @optionElements.chartOptionsTargets
+            .find("div.target-option").remove().end()
+            .append(@constructor.TARGET_OPTION.render(
+                variables: targetVariables
+            )) if remainingVariables.length > 0
+
+        $(".target-option").droppable({
+            accept: ".projectile-option"
+            activeClass: "droppable-active",
+            hoverClass: "droppable-hover",
+            drop: (e) =>
+                $(e.target).addClass("droppable-highlight")
+            out: (e) =>
+                $(e.target).removeClass("droppable-highlight")
+        })
 
         do @display
 

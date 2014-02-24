@@ -44,16 +44,21 @@ overflow: hidden;
 #chart-options-box-body {
   width: 480px;
   height: 500px;
-  background-color: green;
+  background-color: #999;
   float: left;
+  opacity: 0.9;
+  border-radius: 4px 0px 4px 4px;
+  -webkit-border-radius: 4px 0px 4px 4px;
 }
 
 #chart-options-box-btn {
   height: 20px;
   background-color: red;
+  position: relative;
+  float: left;
 
   i {
-    padding: 3px;
+    padding: 4px;
   }
 
   i:hover {
@@ -66,30 +71,45 @@ overflow: hidden;
   top: -30px;
 }
 
-.target-x {
+.target-option {
   float: left;
-  width: 50px;
-  height: 25px;
-  background-color: black;
+  /*width: 50px;
+  height: 25px;*/
+  background-color: #999;
+  opacity: 0.9;
   margin: 5px;
+  padding: 5px;
+  border: 2px dashed black;
+  border-radius: 4px;
+  -webkit-border-radius: 4px;
+  text-align: center;
 }
 
-.projectile-x {
+.projectile-option {
   float: left;
-  width: 50px;
-  height: 25px;
-  background-color: blue;
+  /*width: 50px;
+  height: 25px;*/
+  background-color: black;
   margin: 5px;
+  padding: 5px;
+  border-radius: 4px;
+  -webkit-border-radius: 4px;
+  color: white;
+}
+
+.projectile-option:hover {
+  cursor: move;
 }
 
 .droppable-active {
-  background-color: gray;
+  background-color: yellow;
 }
 
 .droppable-hover {
-  background-color: red;
+  background-color: #444;
 }
 
 .droppable-highlight {
-  background-color: yellow;
+  background-color: #999;
+  border: 2px solid black;
 }

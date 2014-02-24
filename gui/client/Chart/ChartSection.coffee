@@ -19,3 +19,4 @@ class ChartSection
             chartOptions            : $("#chart-options")
             chartTitle              : $("#chart-title")
             chartOptionsBox         : $("#chart-options-box")
+            chartOptionsTargets     : $("#chart-options-targets")
