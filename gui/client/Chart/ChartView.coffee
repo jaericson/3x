@@ -210,10 +210,6 @@ class ChartView extends CompositeElement
         </script>
         """)
 
-
- 
-    
-
     actionHandlerForChartTypeControl: (action) => (e) =>
         e.preventDefault()
         $this = $(e.target)
