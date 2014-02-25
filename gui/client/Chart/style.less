@@ -70,29 +70,32 @@ overflow: hidden;
 
 #chart-options-targets {
   position: relative;
-}
 
-.target-option {
-  float: left;
-  /*width: 50px;
-  height: 25px;*/
-  background-color: #999;
-  opacity: 0.9;
-  margin: 5px;
-  padding: 5px;
-  border: 2px dashed black;
-  border-radius: 4px;
-  -webkit-border-radius: 4px;
-  text-align: center;
+  .target-option {
+    float: left;
+    position: relative;
+    left: -5px;
+    z-index: -1;
+    /*width: 50px;*/
+    height: 20px;
+    background-color: #999;
+    opacity: 0.9;
+    margin: 1px 5px 0px 0px;
+    padding: 2px;
+    border: 2px dashed black;
+    border-radius: 4px;
+    -webkit-border-radius: 4px;
+    text-align: center;
+  }
 }
 
 .projectile-option {
   float: left;
-  /*width: 50px;
-  height: 25px;*/
+  /*width: 50px;*/
+  height: 20px;
   background-color: black;
   margin: 5px;
-  padding: 5px;
+  padding: 2px;
   border-radius: 4px;
   -webkit-border-radius: 4px;
   color: white;

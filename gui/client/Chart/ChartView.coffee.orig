@@ -2,9 +2,6 @@ $ = require "jquery"
 _ = require "underscore"
 d3 = require "d3"
 require "jsrender"
-require "jquery.ui.droppable"
-require "jquery.ui.draggable"
-require "jquery.ui.effect"
 
 _3X_ = require "3x"
 {
@@ -88,45 +85,6 @@ class ChartView extends CompositeElement
         @optionElements.toggleOrigin =
             $(forEachAxisOptionElement "toggleOrigin", "origin", installToggleHandler)
                 .toggleClass("disabled", true)
-        
-        chartOptionsBoxAnimationDuration = 400
-        @optionElements.chartOptionsBox.on("click", "i.icon-plus", (e) =>
-            $(e.target).addClass("icon-remove").removeClass("icon-plus")
-            @optionElements.chartOptionsBox.find("#chart-options-box-btn, .projectile-option:not(.isOnTarget)").animate({
-                left: "480px"
-            }, {
-                duration: chartOptionsBoxAnimationDuration,
-                specialEasing: {
-                  left: "easeOutQuad"
-                }
-            })
-            @optionElements.dummyBox.animate({
-                left: "480px"
-            }, {
-                duration: chartOptionsBoxAnimationDuration,
-                specialEasing: {
-                  left: "easeOutQuad"
-                }
-            }))
-
-        @optionElements.chartOptionsBox.on("click", "i.icon-remove", (e) =>
-            $(e.target).addClass("icon-plus").removeClass("icon-remove")
-            @optionElements.chartOptionsBox.find("#chart-options-box-btn, .projectile-option:not(.isOnTarget)").animate({
-                left: "0px"
-            }, {
-                duration: chartOptionsBoxAnimationDuration,
-                specialEasing: {
-                  left: "easeOutQuad"
-                }
-            })
-            @optionElements.dummyBox.animate({
-                left: "0px"
-            }, {
-                duration: chartOptionsBoxAnimationDuration,
-                specialEasing: {
-                  left: "easeOutQuad"
-                }
-            }))
 
     @AXIS_NAMES: "X Y".trim().split(/\s+/)
 
@@ -181,6 +139,8 @@ class ChartView extends CompositeElement
         </script>
         """)
 
+<<<<<<< HEAD
+=======
     @PROJECTILE_OPTION: $("""
         <script type="text/x-jsrender">
             {{for variables}}
@@ -197,23 +157,12 @@ class ChartView extends CompositeElement
     @TARGET_OPTION: $("""
         <script type="text/x-jsrender">
             {{for variables}}
-                <button class="btn dropdown-toggle" style="float:left" data-toggle="dropdown">
-                    <span class="caret"></span>
-                    <span>{{>name}}</span>
-                </button>
-                <ul class="dropdown-menu">
-                    <li><a href="#">Option 1</a></li>
-                    <li><a href="#">Option 2</a></li>
-                </ul>
-                <div class="target-option" style="width:{{>width}}px"></div>
+                <div class="target-option" style="width:{{>width}}px">{{>name}}</div>
             {{/for}}
         </script>
         """)
 
-
- 
-    
-
+>>>>>>> 075e9cf... Put chart subclasses and Chart into separate files
     actionHandlerForChartTypeControl: (action) => (e) =>
         e.preventDefault()
         $this = $(e.target)
@@ -376,6 +325,8 @@ class ChartView extends CompositeElement
                 names: chartTypes
             ))
 
+<<<<<<< HEAD
+=======
         # add in projectile options and make them draggable
         for v in remainingVariables
             v.isRatio = utils.isRatio v.type
@@ -410,7 +361,7 @@ class ChartView extends CompositeElement
             w = $(projectile).width()
             if w > maxWidth then maxWidth = w
         maxWidth += 10 # buffer room
-        targetNames = ["Y", "X", "Pivot", "Small Mult X", "Small Multi Y"].join("=*").split("*")
+        targetNames = ["Y Axis", "X Axis", "Pivot", "Small Multiples X", "Small Multiples Y"]
         targetVariables = []
         for name in targetNames
             targetVariables.push(
@@ -497,6 +448,7 @@ class ChartView extends CompositeElement
 
 
 
+>>>>>>> 075e9cf... Put chart subclasses and Chart into separate files
         do @display
 
     render: =>
