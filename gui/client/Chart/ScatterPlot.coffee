@@ -46,6 +46,10 @@ class ScatterPlot extends Chart
         if axisX.isLogScaleEnabled
             axisX.axis.tickFormat((d, ix) => 
                 formatter = d3.format(".3s")
-                if ix % 2 == 0 then formatter d else "")
+                if ix % 2 == 0
+                    tmp = formatter d
+                    tmp = tmp.replace(/0*$/, "")
+                    tmp.replace(/\.$/, "")
+                else "")
         else
             axisX.axis.tickFormat d3.format(".3s")

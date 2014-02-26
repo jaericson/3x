@@ -10,7 +10,7 @@ _3X_ = require "3x"
 utils = require "utils"
 
 class Chart
-    constructor: (@baseElement, @data, @chartOptions,  @optionElements) ->
+    constructor: (@baseElement, @data, @chartOptions, @optionElements) ->
         @type = null # TODO REFACTORING instead of branching off with @type, override with subclasses
 
     render: =>
@@ -78,11 +78,20 @@ class Chart
                 axisY.axis = d3.svg.axis()
                     .scale(axisY.scale)
                 if axisY.isLogScaleEnabled
-                    axisY.axis = axisY.axis.tickFormat((d, ix) => 
+                    axisY.axis = axisY.axis.tickFormat((d, ix) -> 
                         formatter = d3.format(".3s")
-                        if ix % 2 == 0 then formatter d else "")
+                        if ix % 2 == 0 
+                            tmp = formatter d
+                            tmp = tmp.replace(/0*$/, "")
+                            tmp.replace(/\.$/, "")
+                        else "")
                 else
-                    axisY.axis = axisY.axis.tickFormat d3.format(".3s")
+                    axisY.axis = axisY.axis.tickFormat((d, ix) -> 
+                        formatter = d3.format(".3s")
+                        tmp = formatter d
+                        tmp = tmp.replace(/0*$/, "")
+                        tmp.replace(/\.$/, "")
+                    )
                 numDigits = Math.max _.pluck(y.ticks(axisY.axis.ticks()).map(y.tickFormat()), "length")...
                 tickWidth = Math.ceil(numDigits * 6.5) #px per digit
                 if i == 0
