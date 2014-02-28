@@ -33,7 +33,7 @@ class BarChart extends Chart
             .data(seriesDataIds)
           .enter().append("rect")
             .attr("class", "databar series-#{series}")
-            .attr("width", (d, ix) => axisX.barWidth / xMap[xCoord(d)].count)
+            .attr("width", (d, ix) => (axisX.barWidth / xMap[xCoord(d)].count) - 1) # need 1px worth of space between bars of same color
             .attr("x", (d, ix) => 
                 xVal = xCoord(d)
                 xIndex = xMap[xVal].index

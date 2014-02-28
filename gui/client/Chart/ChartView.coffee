@@ -92,21 +92,41 @@ class ChartView extends CompositeElement
         chartOptionsBoxAnimationDuration = 400
 
         @optionElements.chartOptionsTargets.on("mouseover", (e) =>
+            target = $(e.target)
+            left = target.offset().left
+            console.log "Left @ " + left
+
             @optionElements.chartOptionsBox.find("i.icon-plus").addClass("icon-remove").removeClass("icon-plus")
+
+            # First, place box above
+            @optionElements.chartOptionsBox.css( {
+                left: left + "px"
+                top: "-200px"
+            })
+
+            @optionElements.chartOptionsBoxDummy.css( {
+                left: left + "px"
+                top: "-200px"
+            })
+
             @optionElements.chartOptionsBox.find("#chart-options-box-btn, .projectile-option:not(.isOnTarget)").animate({
-                left: "480px"
+                # left: "480px"
+                top: "350px"
             }, {
                 duration: chartOptionsBoxAnimationDuration,
                 specialEasing: {
-                  left: "easeOutQuad"
+                  # left: "easeOutQuad"
+                  top: "easeOutQuad"
                 }
             })
             @optionElements.dummyBox.animate({
-                left: "480px"
+                # left: "480px"
+                top: "350px"
             }, {
                 duration: chartOptionsBoxAnimationDuration,
                 specialEasing: {
-                  left: "easeOutQuad"
+                  # left: "easeOutQuad"
+                  top: "easeOutQuad"
                 }
             }))
 
@@ -442,6 +462,10 @@ class ChartView extends CompositeElement
                     })
         })
 
+        @renderTargetsAndProjectiles remainingVariables
+        do @display
+
+    renderTargetsAndProjectiles: (remainingVariables) =>
         # add in target options based on width of projectiles, and make them droppable
         maxWidth = 50
         for projectile in @optionElements.chartOptionsBox.find("div.projectile-option")
@@ -542,7 +566,6 @@ class ChartView extends CompositeElement
                 do @persist
                 do @initializeAxes
         })
-        do @display
 
     render: =>
         # create a visualizable data from the table data and current axes/series configuration
