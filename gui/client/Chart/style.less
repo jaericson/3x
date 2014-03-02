@@ -39,7 +39,7 @@ overflow: hidden;
   height: 200px;
   width: 500px;
   left: 0px;
-  top: 160px;
+  top: 140px;
 }
 
 #chart-options-projectiles, #chart-options-background {
@@ -54,6 +54,7 @@ overflow: hidden;
 
 #chart-options-background {
   background-color: #999;
+  box-shadow: 2px 2px 5px #333;
   opacity: 0.0;
 }
 
@@ -76,7 +77,7 @@ overflow: hidden;
 #chart-options-dropzones {
   position: relative;
 
-  .target-option {
+  .dropzone {
     float: left;
     position: relative;
     left: -6px;
@@ -114,7 +115,7 @@ overflow: hidden;
 }
 
 
-.projectile-option {
+.projectile {
   float: left;
   /*width: 50px;*/
   height: 16px;
@@ -126,10 +127,12 @@ overflow: hidden;
   color: white;
   text-align: center;
   position: relative;
+  left: 0px;
+  top: 0px;
   opacity: 0.0;
 }
 
-.projectile-option:hover {
+.projectile:hover {
   cursor: move;
 }
 
