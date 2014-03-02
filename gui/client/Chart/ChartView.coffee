@@ -30,10 +30,10 @@ class ChartView extends CompositeElement
         @chartType = try JSON.parse localStorage["chartType"]
 
         # axis-change are the currently used axis pickers; axis-add is the 1 that lets you add more (and has a ...)
-        @axesControl
-            .on("click", ".axis-add    .axis-var", @actionHandlerForAxisControl @handleAxisAddition)
-            .on("click", ".axis-change .axis-var", @actionHandlerForAxisControl @handleAxisChange)
-            .on("click", ".axis-change .axis-remove", @actionHandlerForAxisControl @handleAxisRemoval)
+        # @axesControl
+        #     .on("click", ".axis-add    .axis-var", @actionHandlerForAxisControl @handleAxisAddition)
+        #     .on("click", ".axis-change .axis-var", @actionHandlerForAxisControl @handleAxisChange)
+        #     .on("click", ".axis-change .axis-remove", @actionHandlerForAxisControl @handleAxisRemoval)
 
         @typeSelection
             .on("click", ".chart-type-li", @actionHandlerForChartTypeControl @handleChartTypeChange)
@@ -230,24 +230,28 @@ class ChartView extends CompositeElement
         ord = +$axisControl.attr("data-order")
         name = $this.closest(".axis-var").attr("data-name")
         action ord, name, $axisControl, $this, e
-    handleAxisChange: (ord, name, $axisControl) =>
-        $axisControl.find(".axis-name").text(name)
-        @axisNames[ord] = name
-        if ord is @constructor.X_AXIS_ORDINAL then @chartOptions.justChanged = "x-axis"
-        # TODO proceed only when something actually changes
-        do @persist
-        do @initializeAxes
-    handleAxisAddition: (ord, name, $axisControl) =>
-        @axisNames.push name
-        do @persist
-        do @initializeAxes
-    handleAxisRemoval: (ord, name, $axisControl) =>
-        @axisNames.splice ord, 1
-        do @persist
-        do @initializeAxes
+    # handleAxisChange: (ord, name, $axisControl) =>
+    #     $axisControl.find(".axis-name").text(name)
+    #     @axisNames[ord] = name
+    #     if ord is @constructor.X_AXIS_ORDINAL then @chartOptions.justChanged = "x-axis"
+    #     # TODO proceed only when something actually changes
+    #     do @persist
+    #     do @initializeAxes
+    # handleAxisAddition: (ord, name, $axisControl) =>
+    #     # @axisNames.push name
+    #     @axisNames[ord] = name
+    #     do @persist
+    #     do @initializeAxes
+    # handleAxisRemoval: (ord, name, $axisControl) =>
+    #     # @axisNames.splice ord, 1
+    #     @axisNames[ord] = undefined
+    #     do @persist
+    #     do @initializeAxes
 
-    @X_AXIS_ORDINAL: 1 # second variable is X
     @Y_AXIS_ORDINAL: 0 # first variable is Y
+    @X_AXIS_ORDINAL: 1 # second variable is X
+    @PIVOT_AXIS: 2
+    @SMULT_AXIS: 3
     
     # initialize @axes from @axisNames (which is saved in local storage)
     initializeAxes: => 
@@ -276,29 +280,35 @@ class ChartView extends CompositeElement
             canDrawChart no
             return
         # validate the variables chosen for axes
-        defaultAxes = []
-        defaultAxes[@constructor.X_AXIS_ORDINAL] = nominalVariables[0]?.name ? ratioVariables[1]?.name
-        defaultAxes[@constructor.Y_AXIS_ORDINAL] = ratioVariables[0]?.name
-        if @axisNames?
-            # find if all axisNames are valid, don't appear more than once, or make them default
-            for name,ord in @axisNames when (@axisNames.indexOf(name) isnt ord or not axisCandidates.some (col) => col.name is name)
-                @axisNames[ord] = defaultAxes[ord] ? null
-            # discard any null/undefined elements
-            @axisNames = @axisNames.filter (name) => name?
-        else
-            # default axes when axisNames are not in local storage
-            @axisNames = defaultAxes
+        # defaultAxes = []
+        # defaultAxes[@constructor.X_AXIS_ORDINAL] = nominalVariables[0]?.name ? ratioVariables[1]?.name
+        # defaultAxes[@constructor.Y_AXIS_ORDINAL] = ratioVariables[0]?.name
+        # if @axisNames?
+        #     # find if all axisNames are valid, don't appear more than once, or make them default
+        #     for name,ord in @axisNames when (@axisNames.indexOf(name) isnt ord or not axisCandidates.some (col) => col.name is name)
+        #         # @axisNames[ord] = defaultAxes[ord] ? null
+        #         @axisNames[ord] = null
+        #     # discard any null/undefined elements
+        #     # @axisNames = @axisNames.filter (name) => name?
+        # else
+        #     # default axes when axisNames are not in local storage
+        #     @axisNames = defaultAxes
         # collect ResultsTable columns that corresponds to the @axisNames
+        @axisNames?= []
         @vars = @axisNames.map (name) => @table.columns[name]
         # standardize no-units so that "undefined", "null", and an empty string all have null unit
         # TODO: don't set units to null in 2 different places
-        @vars[ord].unit = null for ax,ord in @vars when not ax.unit? or not ax.unit.length? or ax.unit.length is 0
+        @vars[ord].unit = null for ax,ord in @vars when @vars[ord]? and (not ax.unit? or not ax.unit.length? or ax.unit.length is 0)
         @varX      = @vars[@constructor.X_AXIS_ORDINAL]
         # pivot variables in an array if there are additional nominal variables
-        @varsPivot = (ax for ax,ord in @vars when ord isnt @constructor.X_AXIS_ORDINAL and utils.isNominal ax.type)
+        @varsPivot = @vars[@constructor.PIVOT_AXIS]
+        if @varsPivot? then @varsPivot = [@varsPivot] else @varsPivot = []
+        # @varsPivot = (ax for ax,ord in @vars when ord isnt @constructor.X_AXIS_ORDINAL and utils.isNominal ax.type)
         # y-axis variables in an array
         # TODO: there should only be 1 y-axis variable for now
-        @varsY     = (ax for ax,ord in @vars when ord isnt @constructor.X_AXIS_ORDINAL and utils.isRatio   ax.type)
+        @varsY     = @vars[@constructor.Y_AXIS_ORDINAL]
+        if @varsY? then @varsY = [@varsY] else @varsY = []
+        # @varsY     = (ax for ax,ord in @vars when ord isnt @constructor.X_AXIS_ORDINAL and utils.isRatio   ax.type)
         # establish which chart type we're using
         chartTypes = "Line Bar".trim().split(/\s+/)
         noSpecifiedChartType = not @chartType?
@@ -471,7 +481,8 @@ class ChartView extends CompositeElement
                     projectile.removeClass("isOnTarget")
 
                     ord = +target.attr("data-order")
-                    @axisNames.splice ord, 1
+                    # @axisNames.splice ord, 1
+                    @axisNames[ord] = null
                     do @persist
                     do @initializeAxes
         })
