@@ -233,7 +233,7 @@ class ChartView extends CompositeElement
     handleAxisChange: (ord, name, $axisControl) =>
         $axisControl.find(".axis-name").text(name)
         @axisNames[ord] = name
-        if ord is 1 then @chartOptions.justChanged = "x-axis"
+        if ord is @constructor.X_AXIS_ORDINAL then @chartOptions.justChanged = "x-axis"
         # TODO proceed only when something actually changes
         do @persist
         do @initializeAxes
@@ -385,27 +385,20 @@ class ChartView extends CompositeElement
                     variables: axisCandidates #remainingVariables
                 )) if axisCandidates.length > 0 #remainingVariables.length > 0
         $(".projectile").draggable({
+            start: (e) => 
+                projectile = $(e.target)
+                projectile.css("z-index", 2) # always want currently-dragging projectile to appear in front of other projectiles
+
             stop: (e) =>
                 projectile = $(e.target)
+                projectile.css("z-index", "")
                 # projectile was just dopped on a dropzone
                 if projectile.data("droppedOnDropZone") is true
                     projectile.data("droppedOnDropZone", false)
                 else 
                     projectilesHidden = +@optionElements.chartOptionsContainer.find("#chart-options-background").css("opacity") is 0
                     if projectilesHidden
-                        projectile.animate({
-                                opacity: 0.0
-                            }, {
-                            duration: @animationTime,
-                            specialEasing: {
-                                opacity: "easeOutQuad"
-                            }
-                            complete: =>
-                                projectile.css({
-                                    left: +@optionElements.chartOptionsContainer.find("#chart-options-background").css("left").replace("px", "")
-                                    top: "0px"
-                                })
-                        })
+                        @resetProjectile projectile
                     else
                         projectile.animate({
                                 left: +@optionElements.chartOptionsContainer.find("#chart-options-background").css("left").replace("px", "")
@@ -471,27 +464,30 @@ class ChartView extends CompositeElement
                 do @persist
                 do @initializeAxes
             out: (e, ui) =>
-                target = $(e.target)
                 projectile = $(ui.draggable)
-                target.removeClass("droppable-highlight")
-                projectile.removeClass("isOnTarget")
+                if projectile.hasClass("isOnTarget")
+                    target = $(e.target)
+                    target.removeClass("droppable-highlight")
+                    projectile.removeClass("isOnTarget")
 
-                ord = +target.attr("data-order")
-                @axisNames.splice ord, 1
-                do @persist
-                do @initializeAxes
+                    ord = +target.attr("data-order")
+                    @axisNames.splice ord, 1
+                    do @persist
+                    do @initializeAxes
         })
 
         # place vars in their correct spots
         if @varX?
             projectile = $("div.projectile[data-name='#{@varX.name}']")
             target = $("div.dropzone").eq(@constructor.X_AXIS_ORDINAL)
-            @dropOnDropZone target, projectile, true
+            if not projectile.hasClass("isOnTarget")
+                @dropOnDropZone target, projectile, true
 
         if @varsY? and @varsY[0]?
             projectile = $("div.projectile[data-name='#{@varsY[0].name}']")
             target = $("div.dropzone").eq(@constructor.Y_AXIS_ORDINAL)
-            @dropOnDropZone target, projectile, true
+            if not projectile.hasClass("isOnTarget")
+                @dropOnDropZone target, projectile, true
 
         # @varX      = @vars[@constructor.X_AXIS_ORDINAL]
         # # pivot variables in an array if there are additional nominal variables
@@ -507,6 +503,15 @@ class ChartView extends CompositeElement
         ord = +target.attr("data-order")
         name = projectile.text().trim()
         @axisNames[ord] = name
+
+        # swap out old projectile if target is x-axis or y-axis shelf
+        if ord == @constructor.X_AXIS_ORDINAL and @varX?
+            oldProjectile = $("div.projectile[data-name='#{@varX.name}']")
+        else if ord is @constructor.Y_AXIS_ORDINAL and @varsY? and @varsY[0]?
+            oldProjectile = $("div.projectile[data-name='#{@varsY[0].name}']")
+
+        if oldProjectile? and not isDefault
+            @resetProjectile oldProjectile
 
         projectile.data("droppedOnDropZone", true)
         projectile.addClass("isOnTarget")
@@ -542,11 +547,27 @@ class ChartView extends CompositeElement
                     top: "swing"
                 },
             })
-            if ord is 1 then @chartOptions.justChanged = "x-axis"
+            if ord is @constructor.X_AXIS_ORDINAL then @chartOptions.justChanged = "x-axis"
+
+    resetProjectile: (projectile) =>
+            projectile.removeClass("isOnTarget")
+            projectile.animate({
+                opacity: 0.0
+            }, {
+                duration: @animationTime,
+                specialEasing: {
+                    opacity: "easeOutQuad"
+                }
+                complete: =>
+                    projectile.css({
+                        left: +@optionElements.chartOptionsContainer.find("#chart-options-background").css("left").replace("px", "")
+                        top: "0px"
+                    })
+            })
 
     render: =>
         # create a visualizable data from the table data and current axes/series configuration
-        # but only if there is a valid varX and varY
+        # but only if there is a valid varX and varsY
         if not @varX? or not @varsY?
             return
 
