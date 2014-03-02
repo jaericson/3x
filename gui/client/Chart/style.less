@@ -34,18 +34,17 @@ overflow: hidden;
   font-size: 14px;
 }
 
-#chart-options-box, #chart-options-box-dummy {
+#chart-options-projectile-container, #chart-options-background-container {
   position: absolute;
   height: 200px;
   width: 500px;
-  left: -480px;
+  left: 0px;
   top: 160px;
 }
 
-#chart-options-box-body, #chart-options-box-body-dummy {
+#chart-options-projectiles, #chart-options-background {
   width: 480px;
   height: 200px;
-  background-color: #999;
   float: left;
   opacity: 0.9;
   border-radius: 4px 0px 4px 4px;
@@ -53,11 +52,17 @@ overflow: hidden;
   position: relative;
 }
 
-#chart-options-box-btn {
+#chart-options-background {
+  background-color: #999;
+  opacity: 0.0;
+}
+
+#chart-options-projectile-dismissal {
   height: 20px;
   background-color: red;
   position: relative;
   float: left;
+  opacity: 0.0;
 
   i {
     padding: 4px;
@@ -68,7 +73,7 @@ overflow: hidden;
   }
 }
 
-#chart-options-targets {
+#chart-options-dropzones {
   position: relative;
 
   .target-option {
@@ -121,6 +126,7 @@ overflow: hidden;
   color: white;
   text-align: center;
   position: relative;
+  opacity: 0.0;
 }
 
 .projectile-option:hover {

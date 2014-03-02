@@ -89,101 +89,35 @@ class ChartView extends CompositeElement
             $(forEachAxisOptionElement "toggleOrigin", "origin", installToggleHandler)
                 .toggleClass("disabled", true)
         
-        chartOptionsBoxAnimationDuration = 400
+        animationTime = 400
 
-        @optionElements.chartOptionsTargets.on("mouseover", (e) =>
+        # mouseover to display experiment-variables pallette
+        @optionElements.chartOptionsContainer.find("#chart-options-dropzones").on("mouseover", (e) =>
             target = $(e.target)
-            left = target.offset().left
-            console.log "Left @ " + left
-
-            @optionElements.chartOptionsBox.find("i.icon-plus").addClass("icon-remove").removeClass("icon-plus")
+            left = target.closest(".btn-group").offset().left
 
             # First, place box above
-            @optionElements.chartOptionsBox.css( {
+            @optionElements.chartOptionsContainer.find(".chart-options-moveme:not(.isOnTarget)").css( {
                 left: left + "px"
-                top: "-200px"
             })
 
-            @optionElements.chartOptionsBoxDummy.css( {
-                left: left + "px"
-                top: "-200px"
-            })
-
-            @optionElements.chartOptionsBox.find("#chart-options-box-btn, .projectile-option:not(.isOnTarget)").animate({
-                # left: "480px"
-                top: "350px"
+            @optionElements.chartOptionsContainer.find(".chart-options-moveme:not(.isOnTarget)").animate({
+                opacity: 1.0
             }, {
-                duration: chartOptionsBoxAnimationDuration,
+                duration: animationTime,
                 specialEasing: {
-                  # left: "easeOutQuad"
-                  top: "easeOutQuad"
-                }
-            })
-            @optionElements.dummyBox.animate({
-                # left: "480px"
-                top: "350px"
-            }, {
-                duration: chartOptionsBoxAnimationDuration,
-                specialEasing: {
-                  # left: "easeOutQuad"
-                  top: "easeOutQuad"
+                  opacity: "easeOutQuad"
                 }
             }))
 
-        @optionElements.chartOptionsBox.on("click", "i.icon-plus", (e) =>
-            $(e.target).addClass("icon-remove").removeClass("icon-plus")
-            @optionElements.chartOptionsBox.find("#chart-options-box-btn, .projectile-option:not(.isOnTarget)").animate({
-                left: "480px"
+        # dismiss experiment-variables pallette
+        @optionElements.chartOptionsContainer.on("click", "i.icon-remove", (e) =>
+            @optionElements.chartOptionsContainer.find(".chart-options-moveme:not(.isOnTarget)").animate({
+                opacity: 0.0
             }, {
-                duration: chartOptionsBoxAnimationDuration,
+                duration: animationTime,
                 specialEasing: {
-                  left: "easeOutQuad"
-                }
-            })
-            @optionElements.dummyBox.animate({
-                left: "480px"
-            }, {
-                duration: chartOptionsBoxAnimationDuration,
-                specialEasing: {
-                  left: "easeOutQuad"
-                }
-            }))
-
-        # @optionElements.chartOptionsTargets.on("mouseout", (e) =>
-        #     @optionElements.chartOptionsBox.find("i.icon-remove").addClass("icon-plus").removeClass("icon-remove")
-        #     @optionElements.chartOptionsBox.find("#chart-options-box-btn, .projectile-option:not(.isOnTarget)").animate({
-        #         left: "0px"
-        #     }, {
-        #         duration: chartOptionsBoxAnimationDuration,
-        #         specialEasing: {
-        #           left: "easeOutQuad"
-        #         }
-        #     })
-        #     @optionElements.dummyBox.animate({
-        #         left: "0px"
-        #     }, {
-        #         duration: chartOptionsBoxAnimationDuration,
-        #         specialEasing: {
-        #           left: "easeOutQuad"
-        #         }
-        #     }))
-
-        @optionElements.chartOptionsBox.on("click", "i.icon-remove", (e) =>
-            $(e.target).addClass("icon-plus").removeClass("icon-remove")
-            @optionElements.chartOptionsBox.find("#chart-options-box-btn, .projectile-option:not(.isOnTarget)").animate({
-                left: "0px"
-            }, {
-                duration: chartOptionsBoxAnimationDuration,
-                specialEasing: {
-                  left: "easeOutQuad"
-                }
-            })
-            @optionElements.dummyBox.animate({
-                left: "0px"
-            }, {
-                duration: chartOptionsBoxAnimationDuration,
-                specialEasing: {
-                  left: "easeOutQuad"
+                  opacity: "easeOutQuad"
                 }
             }))
 
@@ -243,7 +177,7 @@ class ChartView extends CompositeElement
     @PROJECTILE_OPTION: $("""
         <script type="text/x-jsrender">
             {{for variables}}
-                <div class="projectile-option{{if isRatio}} ratioVariable{{/if}}">
+                <div class="chart-options-moveme projectile-option{{if isRatio}} ratioVariable{{/if}}">
                     <i class="icon icon-{{if isMeasured}}dashboard{{else}}tasks{{/if}}"></i> {{>name}}</div>
             {{/for}}
         </script>
@@ -436,11 +370,9 @@ class ChartView extends CompositeElement
         # add in projectile options and make them draggable
         for v in axisCandidates #remainingVariables
             v.isRatio = utils.isRatio v.type
-        # @optionElements.chartOptionsBox
-        #     .find("div.projectile-option").remove()
-        if @optionElements.chartOptionsBox.find("div.projectile-option").length == 0
-            @optionElements.chartOptionsBox
-                .find("#chart-options-box-body")
+        if @optionElements.chartOptionsContainer.find("div.projectile-option").length == 0
+            @optionElements.chartOptionsContainer
+                .find("#chart-options-projectiles")
                 .append(@constructor.PROJECTILE_OPTION.render(
                     variables: axisCandidates #remainingVariables
                 )) if axisCandidates.length > 0 #remainingVariables.length > 0
@@ -451,7 +383,7 @@ class ChartView extends CompositeElement
                     projectile.data("dropped", false)
                 else 
                     projectile.animate({
-                        "left": +@optionElements.dummyBox.css("left").replace("px", "")
+                        "left": +@optionElements.chartOptionsContainer.find("#chart-options-background").css("left").replace("px", "")
                         "top": "0px"
                         }, {
                         duration: 400,
@@ -468,7 +400,7 @@ class ChartView extends CompositeElement
     renderTargetsAndProjectiles: (remainingVariables) =>
         # add in target options based on width of projectiles, and make them droppable
         maxWidth = 50
-        for projectile in @optionElements.chartOptionsBox.find("div.projectile-option")
+        for projectile in @optionElements.chartOptionsContainer.find("div.projectile-option")
             w = $(projectile).width()
             if w > maxWidth then maxWidth = w
         maxWidth += 14 # buffer room
@@ -483,11 +415,11 @@ class ChartView extends CompositeElement
                 ord: targetVariables.length
             )
 
-        if @optionElements.chartOptionsTargets.find("div.target-option").length == 0
-            @optionElements.chartOptionsTargets
-                .find("div.target-option")
+        if @optionElements.chartOptionsContainer.find("div.target-option").length == 0
+            @optionElements.chartOptionsContainer
+                .find("#chart-options-dropzones")
                 # .remove()
-                .end()
+                # .end()
                 .append(@constructor.TARGET_OPTION.render(
                     variables: targetVariables
                 )) if remainingVariables.length > 0
@@ -528,27 +460,18 @@ class ChartView extends CompositeElement
                     },
                 })
 
-                chartOptionsBoxAnimationDuration = 400
+                animationTime = 400
                 ord = +target.attr("data-order")
                 name = projectile.text().trim()
                 @axisNames[ord] = name
                 if ord == 1 then @chartOptions.justChanged = "x-axis"
 
-                @optionElements.chartOptionsBox.find("i.icon-remove").addClass("icon-plus").removeClass("icon-remove")
-                @optionElements.chartOptionsBox.find("#chart-options-box-btn, .projectile-option:not(.isOnTarget)").animate({
-                    left: "0px"
+                @optionElements.chartOptionsContainer.find(".chart-options-moveme:not(.isOnTarget)").animate({
+                    opacity: 0.0
                 }, {
-                    duration: chartOptionsBoxAnimationDuration,
+                    duration: animationTime,
                     specialEasing: {
-                      left: "easeOutQuad"
-                    }
-                })
-                @optionElements.dummyBox.animate({
-                    left: "0px"
-                }, {
-                    duration: chartOptionsBoxAnimationDuration,
-                    specialEasing: {
-                      left: "easeOutQuad"
+                      opacity: "easeOutQuad"
                     }
                 })
 
