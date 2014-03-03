@@ -135,8 +135,8 @@ class ChartView extends CompositeElement
     @AXIS_NAMES: "X Y".trim().split(/\s+/)
 
     persist: =>
-        localStorage["shelfX"] = JSON.stringify @shelves.X.getNames
-        localStorage["shelfY"] = JSON.stringify @shelves.Y.getNames
+        localStorage["shelfX"] = JSON.stringify @shelves.X.getNames()
+        localStorage["shelfY"] = JSON.stringify @shelves.Y.getNames()
         localStorage["chartType"] = JSON.stringify @chartType
 
     # axis change dropdown HTML skeleton
@@ -307,8 +307,8 @@ class ChartView extends CompositeElement
 
         cachedX = try JSON.parse localStorage["shelfX"]
         cachedX?= ["numAccess.mean"]
-        cachedY = try JSON.parse localStorage["shelfY"]
-        cachedY?= ["ratioSortedIn.mean"]
+        # cachedY = try JSON.parse localStorage["shelfY"]
+        cachedY= ["ratioSortedIn.mean"]
 
         @shelves?= {
             "Y": new ShelfMultiple cachedY, 0
@@ -534,11 +534,12 @@ class ChartView extends CompositeElement
             if not projectile.hasClass("isOnTarget")
                 @dropOnDropZone target, projectile, true
 
-        if @varsY? and @varsY[0]?
-            projectile = $("div.projectile[data-name='#{@varsY[0].name}']")
-            target = $("div.dropzone").eq(@constructor.Y_AXIS_ORDINAL)
-            if not projectile.hasClass("isOnTarget")
-                @dropOnDropZone target, projectile, true
+        if @varsY?
+            for vY in @varsY
+                projectile = $("div.projectile[data-name='#{vY.name}']")
+                target = $("div.dropzone").eq(@constructor.Y_AXIS_ORDINAL)
+                if not projectile.hasClass("isOnTarget")
+                    @dropOnDropZone target, projectile, true
 
         # @varX      = @vars[@constructor.X_AXIS_ORDINAL]
         # # pivot variables in an array if there are additional nominal variables
@@ -555,66 +556,13 @@ class ChartView extends CompositeElement
         name = projectile.text().trim()
         shelf = @shelves[@constructor.ORD_TO_AXIS_SHELF[ord]]
 
-        # TODO: Allow multiples per shelf
-        # @shelves[ord] = name
         if not isDefault
             oldName = shelf.addName(name)
             if oldName?
                 oldProjectile = $("div.projectile[data-name='#{oldName}']")
                 @resetProjectile oldProjectile
 
-        # # swap out old projectile if target is x-axis or y-axis shelf
-        # if ord == @constructor.X_AXIS_ORDINAL and @varX?
-        #     oldProjectile = $("div.projectile[data-name='#{@varX.name}']")
-        # else if ord is @constructor.Y_AXIS_ORDINAL and @varsY? and @varsY[0]?
-        #     oldProjectile = $("div.projectile[data-name='#{@varsY[0].name}']")
-
-        # if ord == @constructor.X_AXIS_ORDINAL and oldProjectile? and not isDefault
-        #     @resetProjectile oldProjectile
-
-        # if numVariables is greater than 1, expand the height of the target
-        # h = target.height()
-        # if numVariables > 1
-        #     target.css("height", (h + 18))
-
         shelf.positionOnShelf(projectile, isDefault, @animationTime)
-
-        # projectile.data("droppedOnDropZone", true)
-        # projectile.addClass("isOnTarget")
-        # target.addClass("droppable-highlight")
-        # offset = target.offset() # .top, .left
-        # w = target.outerWidth()
-        # h = target.outerHeight()
-        
-        # offset2 = projectile.offset()
-        # w2 = projectile.outerWidth()
-        # h2 = projectile.outerHeight()
-        # l = +projectile.css("left").replace("px", "")
-        # t = +projectile.css("top").replace("px", "")
-        # deltaY = ((18 * (numVariables - 1)) + offset.top + ((h - h2) / 2)) - offset2.top
-        # deltaX = (offset.left + ((w - w2) / 2)) - offset2.left
-
-        # newLeft = (l + deltaX + 3) + "px" # + 3 to account for left @ -6px in CSS
-        # newTop = (t + deltaY) + "px"
-
-        # if isDefault
-        #     projectile.css({
-        #         left: newLeft
-        #         top: newTop
-        #         opacity: 1.0
-        #     })
-        # else
-        #     projectile.animate({
-        #             left: newLeft
-        #             top: newTop
-        #         }, {
-        #         duration: @animationTime,
-        #         specialEasing: {
-        #             left: "swing"
-        #             top: "swing"
-        #         },
-        #     })
-        
         if ord is @constructor.X_AXIS_ORDINAL then @chartOptions.justChanged = "x-axis"
 
     resetProjectile: (projectile) =>

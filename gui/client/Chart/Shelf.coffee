@@ -13,16 +13,10 @@ class Shelf
     constructor: (@axisNames, @dropzoneIndex) ->
         # Sets above parameters
         @dropzoneClass = "dropzone"
-        @heightIncrement = 30
+        @heightPerProjectile = 26
 
     addName: (axisName) =>
         @axisNames.push axisName
-
-        # increase height of target to accomodate more variables
-        target = $(".#{@dropzoneClass}").eq(@dropzoneIndex)
-        h = target.height()
-        target.css("height", (h + @heightIncrement))
-
         return null
 
     getNames: =>
@@ -32,11 +26,18 @@ class Shelf
         return @axisNames.map (name) => table.columns[name]
 
     positionOnShelf: (projectile, isDefault, animationTime) =>
+        # increase height of target to accomodate more variables
         target = $(".#{@dropzoneClass}").eq(@dropzoneIndex)
+        target.css("height", @heightPerProjectile * @axisNames.length)
+        target.addClass("droppable-highlight")
 
         projectile.data("droppedOnDropZone", true)
         projectile.addClass("isOnTarget")
-        target.addClass("droppable-highlight")
+        name = projectile.text().trim()
+        index = @getNames().indexOf(name)
+
+        if index is -1
+            error "Can't find projectile name: #{name} as a shelf name" 
         
         targetOffset     = target.offset()
         targetW          = target.outerWidth()
@@ -50,7 +51,7 @@ class Shelf
         projectileTop    = +projectile.css("top").replace("px", "")
 
         centerOnTarget = (targetH / @axisNames.length - projectileH) / 2
-        slotDownward = @heightIncrement * (@axisNames.length - 1)
+        slotDownward = @heightPerProjectile * index
         deltaY = projectileOffset.top - slotDownward - (targetOffset.top + centerOnTarget)
         
         centerOnTarget = (targetW - projectileW) / 2
