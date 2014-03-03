@@ -20,13 +20,15 @@ Chart = require "Chart"
 BarChart = require "BarChart"
 ScatterPlot = require "ScatterPlot"
 LineChart = require "LineChart"
+Shelf = require "Shelf"
+ShelfSingular = require "ShelfSingular"
+ShelfMultiple = require "ShelfMultiple"
 
 class ChartView extends CompositeElement
     constructor: (@baseElement, @typeSelection, @axesControl, @table, @optionElements = {}) ->
         super @baseElement
 
-        # use local storage to remember previous axes
-        @axisNames = try JSON.parse localStorage["chartAxes"]
+        # use local storage to remember previous chart type
         @chartType = try JSON.parse localStorage["chartType"]
 
         # axis-change are the currently used axis pickers; axis-add is the 1 that lets you add more (and has a ...)
@@ -133,7 +135,8 @@ class ChartView extends CompositeElement
     @AXIS_NAMES: "X Y".trim().split(/\s+/)
 
     persist: =>
-        localStorage["chartAxes"] = JSON.stringify @axisNames
+        localStorage["shelfX"] = JSON.stringify @shelves.X.getNames
+        localStorage["shelfY"] = JSON.stringify @shelves.Y.getNames
         localStorage["chartType"] = JSON.stringify @chartType
 
     # axis change dropdown HTML skeleton
@@ -237,19 +240,19 @@ class ChartView extends CompositeElement
         action ord, name, $axisControl, $this, e
     # handleAxisChange: (ord, name, $axisControl) =>
     #     $axisControl.find(".axis-name").text(name)
-    #     @axisNames[ord] = name
+    #     @shelves[ord] = name
     #     if ord is @constructor.X_AXIS_ORDINAL then @chartOptions.justChanged = "x-axis"
     #     # TODO proceed only when something actually changes
     #     do @persist
     #     do @initializeAxes
     # handleAxisAddition: (ord, name, $axisControl) =>
-    #     # @axisNames.push name
-    #     @axisNames[ord] = name
+    #     # @shelves.push name
+    #     @shelves[ord] = name
     #     do @persist
     #     do @initializeAxes
     # handleAxisRemoval: (ord, name, $axisControl) =>
-    #     # @axisNames.splice ord, 1
-    #     @axisNames[ord] = undefined
+    #     # @shelves.splice ord, 1
+    #     @shelves[ord] = undefined
     #     do @persist
     #     do @initializeAxes
 
@@ -260,7 +263,7 @@ class ChartView extends CompositeElement
     @ORD_TO_AXIS_SHELF: ["Y", "X", "PIVOT", "SMULT"]
 
     
-    # initialize @axes from @axisNames (which is saved in local storage)
+    # initialize @axes from @shelves (which is saved in local storage)
     initializeAxes: => 
         if @table.deferredDisplay?
             do @table.render # XXX charting heavily depends on the rendered table, so force rendering
@@ -290,30 +293,41 @@ class ChartView extends CompositeElement
         # defaultAxes = []
         # defaultAxes[@constructor.X_AXIS_ORDINAL] = nominalVariables[0]?.name ? ratioVariables[1]?.name
         # defaultAxes[@constructor.Y_AXIS_ORDINAL] = ratioVariables[0]?.name
-        # if @axisNames?
-        #     # find if all axisNames are valid, don't appear more than once, or make them default
-        #     for name,ord in @axisNames when (@axisNames.indexOf(name) isnt ord or not axisCandidates.some (col) => col.name is name)
-        #         # @axisNames[ord] = defaultAxes[ord] ? null
-        #         @axisNames[ord] = null
+        # if @shelves?
+        #     # find if all shelves are valid, don't appear more than once, or make them default
+        #     for name,ord in @shelves when (@shelves.indexOf(name) isnt ord or not axisCandidates.some (col) => col.name is name)
+        #         # @shelves[ord] = defaultAxes[ord] ? null
+        #         @shelves[ord] = null
         #     # discard any null/undefined elements
-        #     # @axisNames = @axisNames.filter (name) => name?
+        #     # @shelves = @shelves.filter (name) => name?
         # else
-        #     # default axes when axisNames are not in local storage
-        #     @axisNames = defaultAxes
-        # collect ResultsTable columns that corresponds to the @axisNames
-        @axisNames?= {}
-        # @axisNames = {
-        #     "Y": ["ratioSortedIn.mean"]
-        #     "X": "numAccess.mean"
-        #     "PIVOT": []
-        #     "SMULT": []
-        # }
-        # @vars = @axisNames.map (name) => @table.columns[name]
+        #     # default axes when shelves are not in local storage
+        #     @shelves = defaultAxes
+        # collect ResultsTable columns that corresponds to the @shelves
 
-        @varX = ([@axisNames.X].map (name) => @table.columns[name])[0]
-        @varsY = @axisNames.Y.map (name) => @table.columns[name]
-        @varsPivot = @axisNames.PIVOT.map (name) => @table.columns[name]
-        @varsSmult = @axisNames.SMULT.map (name) => @table.columns[name]
+        cachedX = try JSON.parse localStorage["shelfX"]
+        cachedX?= ["numAccess.mean"]
+        cachedY = try JSON.parse localStorage["shelfY"]
+        cachedY?= ["ratioSortedIn.mean"]
+
+        @shelves?= {
+            "Y": new ShelfMultiple cachedY, 0
+            "X": new ShelfSingular cachedX, 1
+            "PIVOT": new ShelfMultiple [], 2
+            "SMULT": new ShelfMultiple [], 3
+        }
+
+        # @vars = @shelves.map (name) => @table.columns[name]
+
+        # @varX = ([@shelves.X].map (name) => @table.columns[name])[0]
+        # @varsY = @shelves.Y.map (name) => @table.columns[name]
+        # @varsPivot = @shelves.PIVOT.map (name) => @table.columns[name]
+        # @varsSmult = @shelves.SMULT.map (name) => @table.columns[name]
+
+        @varX = @shelves.X.getVariables(@table)
+        @varsY = @shelves.Y.getVariables(@table)
+        @varsPivot = @shelves.PIVOT.getVariables(@table)
+        @varsSmult = @shelves.SMULT.getVariables(@table)
 
         # standardize no-units so that "undefined", "null", and an empty string all have null unit
         # TODO: don't set units to null in 2 different places
@@ -366,17 +380,17 @@ class ChartView extends CompositeElement
                 #     @varsY[ord] = null
                 #     ord2 = @vars.indexOf ax
                 #     @vars.splice ord2, 1
-                #     @axisNames.splice ord2, 1
+                #     @shelves.splice ord2, 1
             @varsY = @varsY.filter (v) => v?
         # TODO validation of each axis type with the chart type
-        # find out remaining variables: all the axis candidates that haven't been used as in @axisNames yet
+        # find out remaining variables: all the axis candidates that haven't been used as in @shelves yet
         remainingVariables = (
-                # if @axisNames.length < 3 or (_.size @varsYbyUnit) < 2
-                if @axisNames[0]? and @axisNames[1].length > 0 # filter variables in a third unit when there're already two axes
+                # if @shelves.length < 3 or (_.size @varsYbyUnit) < 2
+                if @shelves[0]? and @shelves[1].length > 0 # filter variables in a third unit when there're already two axes
                     ax for ax in axisCandidates when @varsYbyUnit[ax.unit]? or utils.isNominal ax.type
                 else
                     axisCandidates
-            ).filter((col) => col.name not in @axisNames)
+            ).filter((col) => col.name not in @shelves)
         # render the controls
         # @axesControl
         #     .find(".axis-control").remove().end()
@@ -501,13 +515,13 @@ class ChartView extends CompositeElement
                     projectile.removeClass("isOnTarget")
 
                     ord = +target.attr("data-order")
-                    # @axisNames[ord] = null
+                    # @shelves[ord] = null
                     # TODO: allow multiples per shelf
                     if ord == @constructor.X_AXIS_ORDINAL
-                        @axisNames[@constructor.ORD_TO_AXIS_SHELF[ord]] = ""
+                        @shelves[@constructor.ORD_TO_AXIS_SHELF[ord]] = ""
                     else
-                        index = @axisNames[@constructor.ORD_TO_AXIS_SHELF[ord]].indexOf(projectile.name)
-                        @axisNames[@constructor.ORD_TO_AXIS_SHELF[ord]].splice index, 1
+                        index = @shelves[@constructor.ORD_TO_AXIS_SHELF[ord]].indexOf(projectile.name)
+                        @shelves[@constructor.ORD_TO_AXIS_SHELF[ord]].splice index, 1
                     
                     do @persist
                     do @initializeAxes
@@ -539,66 +553,69 @@ class ChartView extends CompositeElement
     dropOnDropZone: (target, projectile, isDefault) =>
         ord = +target.attr("data-order")
         name = projectile.text().trim()
+        shelf = @shelves[@constructor.ORD_TO_AXIS_SHELF[ord]]
+
         # TODO: Allow multiples per shelf
-        # @axisNames[ord] = name
-        numVariables = 1
+        # @shelves[ord] = name
         if not isDefault
-            if ord == @constructor.X_AXIS_ORDINAL
-                @axisNames[@constructor.ORD_TO_AXIS_SHELF[ord]] = name
-            else
-                @axisNames[@constructor.ORD_TO_AXIS_SHELF[ord]].push name
-                numVariables = @axisNames[@constructor.ORD_TO_AXIS_SHELF[ord]].length
+            oldName = shelf.addName(name)
+            if oldName?
+                oldProjectile = $("div.projectile[data-name='#{oldName}']")
+                @resetProjectile oldProjectile
 
-        # swap out old projectile if target is x-axis or y-axis shelf
-        if ord == @constructor.X_AXIS_ORDINAL and @varX?
-            oldProjectile = $("div.projectile[data-name='#{@varX.name}']")
-        else if ord is @constructor.Y_AXIS_ORDINAL and @varsY? and @varsY[0]?
-            oldProjectile = $("div.projectile[data-name='#{@varsY[0].name}']")
+        # # swap out old projectile if target is x-axis or y-axis shelf
+        # if ord == @constructor.X_AXIS_ORDINAL and @varX?
+        #     oldProjectile = $("div.projectile[data-name='#{@varX.name}']")
+        # else if ord is @constructor.Y_AXIS_ORDINAL and @varsY? and @varsY[0]?
+        #     oldProjectile = $("div.projectile[data-name='#{@varsY[0].name}']")
 
-        if ord == @constructor.X_AXIS_ORDINAL and oldProjectile? and not isDefault
-            @resetProjectile oldProjectile
+        # if ord == @constructor.X_AXIS_ORDINAL and oldProjectile? and not isDefault
+        #     @resetProjectile oldProjectile
 
         # if numVariables is greater than 1, expand the height of the target
-        h = target.height()
-        if numVariables > 1
-            target.css("height", (h + 18))
+        # h = target.height()
+        # if numVariables > 1
+        #     target.css("height", (h + 18))
 
-        projectile.data("droppedOnDropZone", true)
-        projectile.addClass("isOnTarget")
-        target.addClass("droppable-highlight")
-        offset = target.offset() # .top, .left
-        w = target.outerWidth()
-        h = target.outerHeight()
+        shelf.positionOnShelf(projectile, isDefault, @animationTime)
+
+        # projectile.data("droppedOnDropZone", true)
+        # projectile.addClass("isOnTarget")
+        # target.addClass("droppable-highlight")
+        # offset = target.offset() # .top, .left
+        # w = target.outerWidth()
+        # h = target.outerHeight()
         
-        offset2 = projectile.offset()
-        w2 = projectile.outerWidth()
-        h2 = projectile.outerHeight()
-        l = +projectile.css("left").replace("px", "")
-        t = +projectile.css("top").replace("px", "")
-        deltaY = ((18 * (numVariables - 1)) + offset.top + ((h - h2) / 2)) - offset2.top
-        deltaX = (offset.left + ((w - w2) / 2)) - offset2.left
+        # offset2 = projectile.offset()
+        # w2 = projectile.outerWidth()
+        # h2 = projectile.outerHeight()
+        # l = +projectile.css("left").replace("px", "")
+        # t = +projectile.css("top").replace("px", "")
+        # deltaY = ((18 * (numVariables - 1)) + offset.top + ((h - h2) / 2)) - offset2.top
+        # deltaX = (offset.left + ((w - w2) / 2)) - offset2.left
 
-        newLeft = (l + deltaX + 3) + "px" # + 3 to account for left @ -6px in CSS
-        newTop = (t + deltaY) + "px"
+        # newLeft = (l + deltaX + 3) + "px" # + 3 to account for left @ -6px in CSS
+        # newTop = (t + deltaY) + "px"
 
-        if isDefault
-            projectile.css({
-                left: newLeft
-                top: newTop
-                opacity: 1.0
-            })
-        else
-            projectile.animate({
-                    left: newLeft
-                    top: newTop
-                }, {
-                duration: @animationTime,
-                specialEasing: {
-                    left: "swing"
-                    top: "swing"
-                },
-            })
-            if ord is @constructor.X_AXIS_ORDINAL then @chartOptions.justChanged = "x-axis"
+        # if isDefault
+        #     projectile.css({
+        #         left: newLeft
+        #         top: newTop
+        #         opacity: 1.0
+        #     })
+        # else
+        #     projectile.animate({
+        #             left: newLeft
+        #             top: newTop
+        #         }, {
+        #         duration: @animationTime,
+        #         specialEasing: {
+        #             left: "swing"
+        #             top: "swing"
+        #         },
+        #     })
+        
+        if ord is @constructor.X_AXIS_ORDINAL then @chartOptions.justChanged = "x-axis"
 
     resetProjectile: (projectile) =>
             projectile.removeClass("isOnTarget")
