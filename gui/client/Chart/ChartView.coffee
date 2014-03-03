@@ -88,6 +88,11 @@ class ChartView extends CompositeElement
         @optionElements.toggleOrigin =
             $(forEachAxisOptionElement "toggleOrigin", "origin", installToggleHandler)
                 .toggleClass("disabled", true)
+
+        # set absolute position top of projectile container and corresponding background container
+        # top = @optionElements.chartOptionsContainer.find("#chart-options-dropzones").offset().top
+        # @optionElements.chartOptionsContainer.find("#chart-options-background-container").css("top", (top + 25) + "px")
+        # @optionElements.chartOptionsContainer.find("#chart-options-projectile-container").css("top", (top + 25) + "px")
         
         @animationTime = 400
         # mouseover to display experiment-variables pallette
@@ -252,6 +257,8 @@ class ChartView extends CompositeElement
     @X_AXIS_ORDINAL: 1 # second variable is X
     @PIVOT_AXIS: 2
     @SMULT_AXIS: 3
+    @ORD_TO_AXIS_SHELF: ["Y", "X", "PIVOT", "SMULT"]
+
     
     # initialize @axes from @axisNames (which is saved in local storage)
     initializeAxes: => 
@@ -294,20 +301,32 @@ class ChartView extends CompositeElement
         #     # default axes when axisNames are not in local storage
         #     @axisNames = defaultAxes
         # collect ResultsTable columns that corresponds to the @axisNames
-        @axisNames?= []
-        @vars = @axisNames.map (name) => @table.columns[name]
+        @axisNames?= {}
+        # @axisNames = {
+        #     "Y": ["ratioSortedIn.mean"]
+        #     "X": "numAccess.mean"
+        #     "PIVOT": []
+        #     "SMULT": []
+        # }
+        # @vars = @axisNames.map (name) => @table.columns[name]
+
+        @varX = ([@axisNames.X].map (name) => @table.columns[name])[0]
+        @varsY = @axisNames.Y.map (name) => @table.columns[name]
+        @varsPivot = @axisNames.PIVOT.map (name) => @table.columns[name]
+        @varsSmult = @axisNames.SMULT.map (name) => @table.columns[name]
+
         # standardize no-units so that "undefined", "null", and an empty string all have null unit
         # TODO: don't set units to null in 2 different places
-        @vars[ord].unit = null for ax,ord in @vars when @vars[ord]? and (not ax.unit? or not ax.unit.length? or ax.unit.length is 0)
-        @varX      = @vars[@constructor.X_AXIS_ORDINAL]
+            # @vars[ord].unit = null for ax,ord in @vars when @vars[ord]? and (not ax.unit? or not ax.unit.length? or ax.unit.length is 0)
+            # @varX      = @vars[@constructor.X_AXIS_ORDINAL]
         # pivot variables in an array if there are additional nominal variables
-        @varsPivot = @vars[@constructor.PIVOT_AXIS]
-        if @varsPivot? then @varsPivot = [@varsPivot] else @varsPivot = []
+            # @varsPivot = @vars[@constructor.PIVOT_AXIS]
+            # if @varsPivot? then @varsPivot = [@varsPivot] else @varsPivot = []
         # @varsPivot = (ax for ax,ord in @vars when ord isnt @constructor.X_AXIS_ORDINAL and utils.isNominal ax.type)
         # y-axis variables in an array
         # TODO: there should only be 1 y-axis variable for now
-        @varsY     = @vars[@constructor.Y_AXIS_ORDINAL]
-        if @varsY? then @varsY = [@varsY] else @varsY = []
+            # @varsY     = @vars[@constructor.Y_AXIS_ORDINAL]
+            # if @varsY? then @varsY = [@varsY] else @varsY = []
         # @varsY     = (ax for ax,ord in @vars when ord isnt @constructor.X_AXIS_ORDINAL and utils.isRatio   ax.type)
         # establish which chart type we're using
         chartTypes = "Line Bar".trim().split(/\s+/)
@@ -341,45 +360,46 @@ class ChartView extends CompositeElement
                 u = ax.unit
                 (@varsYbyUnit[u] ?= []).push ax
                 # remove Y axis variable if it uses a second unit
-                if (_.size @varsYbyUnit) > 1
-                    delete @varsYbyUnit[u]
-                    @varsY[ord] = null
-                    ord2 = @vars.indexOf ax
-                    @vars.splice ord2, 1
-                    @axisNames.splice ord2, 1
+                # with drag-and-drop, this should never happen
+                # if (_.size @varsYbyUnit) > 1
+                #     delete @varsYbyUnit[u]
+                #     @varsY[ord] = null
+                #     ord2 = @vars.indexOf ax
+                #     @vars.splice ord2, 1
+                #     @axisNames.splice ord2, 1
             @varsY = @varsY.filter (v) => v?
         # TODO validation of each axis type with the chart type
         # find out remaining variables: all the axis candidates that haven't been used as in @axisNames yet
         remainingVariables = (
                 # if @axisNames.length < 3 or (_.size @varsYbyUnit) < 2
-                if @axisNames.length < 2
-                    axisCandidates
-                else # filter variables in a third unit when there're already two axes
+                if @axisNames[0]? and @axisNames[1].length > 0 # filter variables in a third unit when there're already two axes
                     ax for ax in axisCandidates when @varsYbyUnit[ax.unit]? or utils.isNominal ax.type
+                else
+                    axisCandidates
             ).filter((col) => col.name not in @axisNames)
         # render the controls
-        @axesControl
-            .find(".axis-control").remove().end()
-            .append(
-                for ax,ord in @vars
-                    @constructor.AXIS_PICK_CONTROL_SKELETON.render({
-                        ord: ord
-                        axis: ax
-                        variables: (if ord is @constructor.Y_AXIS_ORDINAL then ratioVariables else if ord is @constructor.X_AXIS_ORDINAL then axisCandidates else remainingVariables)
-                                    # the first axis (Y) must always be of ratio type
-                            .filter((col) => col not in @vars[0..ord]) # and without the current one
-                        isOptional: (ord > 1) # there always has to be at least two axes
-                    })
-            )
-        @axesControl.append(@constructor.AXIS_ADD_CONTROL_SKELETON.render(
-            variables: remainingVariables
-        )) if remainingVariables.length > 0
+        # @axesControl
+        #     .find(".axis-control").remove().end()
+        #     .append(
+        #         for ax,ord in @vars
+        #             @constructor.AXIS_PICK_CONTROL_SKELETON.render({
+        #                 ord: ord
+        #                 axis: ax
+        #                 variables: (if ord is @constructor.Y_AXIS_ORDINAL then ratioVariables else if ord is @constructor.X_AXIS_ORDINAL then axisCandidates else remainingVariables)
+        #                             # the first axis (Y) must always be of ratio type
+        #                     .filter((col) => col not in @vars[0..ord]) # and without the current one
+        #                 isOptional: (ord > 1) # there always has to be at least two axes
+        #             })
+        #     )
+        # @axesControl.append(@constructor.AXIS_ADD_CONTROL_SKELETON.render(
+        #     variables: remainingVariables
+        # )) if remainingVariables.length > 0
 
-        @typeSelection
-            .find("li.chart-type-li").remove().end()
-            .append(@constructor.CHART_PICK_CONTROL_SKELETON.render(
-                names: chartTypes
-            ))
+        # @typeSelection
+        #     .find("li.chart-type-li").remove().end()
+        #     .append(@constructor.CHART_PICK_CONTROL_SKELETON.render(
+        #         names: chartTypes
+        #     ))
 
         @renderTargetsAndProjectiles axisCandidates, remainingVariables
         do @display
@@ -428,7 +448,7 @@ class ChartView extends CompositeElement
             w = $(projectile).width()
             if w > maxWidth then maxWidth = w
         maxWidth += 14 # buffer room
-        targetNames = ["Y", "X", "Pivot", "Small Mult X", "Small Mult Y"]
+        targetNames = ["Y", "X", "Pivot", "Small Mult"]
         targetNames = _.map(targetNames, (x) -> x + "=")
 
         targetVariables = []
@@ -481,8 +501,14 @@ class ChartView extends CompositeElement
                     projectile.removeClass("isOnTarget")
 
                     ord = +target.attr("data-order")
-                    # @axisNames.splice ord, 1
-                    @axisNames[ord] = null
+                    # @axisNames[ord] = null
+                    # TODO: allow multiples per shelf
+                    if ord == @constructor.X_AXIS_ORDINAL
+                        @axisNames[@constructor.ORD_TO_AXIS_SHELF[ord]] = ""
+                    else
+                        index = @axisNames[@constructor.ORD_TO_AXIS_SHELF[ord]].indexOf(projectile.name)
+                        @axisNames[@constructor.ORD_TO_AXIS_SHELF[ord]].splice index, 1
+                    
                     do @persist
                     do @initializeAxes
         })
@@ -513,7 +539,15 @@ class ChartView extends CompositeElement
     dropOnDropZone: (target, projectile, isDefault) =>
         ord = +target.attr("data-order")
         name = projectile.text().trim()
-        @axisNames[ord] = name
+        # TODO: Allow multiples per shelf
+        # @axisNames[ord] = name
+        numVariables = 1
+        if not isDefault
+            if ord == @constructor.X_AXIS_ORDINAL
+                @axisNames[@constructor.ORD_TO_AXIS_SHELF[ord]] = name
+            else
+                @axisNames[@constructor.ORD_TO_AXIS_SHELF[ord]].push name
+                numVariables = @axisNames[@constructor.ORD_TO_AXIS_SHELF[ord]].length
 
         # swap out old projectile if target is x-axis or y-axis shelf
         if ord == @constructor.X_AXIS_ORDINAL and @varX?
@@ -521,8 +555,13 @@ class ChartView extends CompositeElement
         else if ord is @constructor.Y_AXIS_ORDINAL and @varsY? and @varsY[0]?
             oldProjectile = $("div.projectile[data-name='#{@varsY[0].name}']")
 
-        if oldProjectile? and not isDefault
+        if ord == @constructor.X_AXIS_ORDINAL and oldProjectile? and not isDefault
             @resetProjectile oldProjectile
+
+        # if numVariables is greater than 1, expand the height of the target
+        h = target.height()
+        if numVariables > 1
+            target.css("height", (h + 18))
 
         projectile.data("droppedOnDropZone", true)
         projectile.addClass("isOnTarget")
@@ -530,12 +569,13 @@ class ChartView extends CompositeElement
         offset = target.offset() # .top, .left
         w = target.outerWidth()
         h = target.outerHeight()
+        
         offset2 = projectile.offset()
         w2 = projectile.outerWidth()
         h2 = projectile.outerHeight()
         l = +projectile.css("left").replace("px", "")
         t = +projectile.css("top").replace("px", "")
-        deltaY = (offset.top + ((h - h2) / 2)) - offset2.top
+        deltaY = ((18 * (numVariables - 1)) + offset.top + ((h - h2) / 2)) - offset2.top
         deltaX = (offset.left + ((w - w2) / 2)) - offset2.left
 
         newLeft = (l + deltaX + 3) + "px" # + 3 to account for left @ -6px in CSS
