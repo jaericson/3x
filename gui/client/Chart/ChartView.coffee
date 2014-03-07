@@ -97,40 +97,14 @@ class ChartView extends CompositeElement
         # @optionElements.chartOptionsContainer.find("#chart-options-projectile-container").css("top", (top + 25) + "px")
         
         @animationTime = 400
-        # mouseover to display experiment-variables pallette
+        
+        # mouseover to display projectiles
         @optionElements.chartOptionsContainer.find("#chart-options-dropzones").on("mouseover", (e) =>
             target = $(e.target)
+            @showProjectiles target.closest(".btn-group").offset().left
+        )
 
-            left = target.closest(".btn-group").offset().left
-            moveMe = @optionElements.chartOptionsContainer.find(".chart-options-moveme:not(.isOnTarget)")
-
-            # First, place box above
-            moveMe.css( {
-                left: left + "px"
-            })
-
-            # Then, animate opacity change if hidden
-            if +moveMe.eq(0).css("opacity") is 0
-                moveMe.animate({
-                    opacity: 1.0
-                }, {
-                    duration: @animationTime,
-                    specialEasing: {
-                      opacity: "easeOutQuad"
-                    }
-                })
-            )
-
-        # dismiss experiment-variables pallette
-        @optionElements.chartOptionsContainer.on("click", "i.icon-remove", (e) =>
-            @optionElements.chartOptionsContainer.find(".chart-options-moveme:not(.isOnTarget)").animate({
-                opacity: 0.0
-            }, {
-                duration: @animationTime,
-                specialEasing: {
-                  opacity: "easeOutQuad"
-                }
-            }))
+        @optionElements.chartOptionsContainer.on("click", "i.icon-remove", (e) => do @hideProjectiles)
 
     @AXIS_NAMES: "X Y".trim().split(/\s+/)
 
@@ -435,25 +409,13 @@ class ChartView extends CompositeElement
 
             stop: (e) =>
                 projectile = $(e.target)
-                projectile.css("z-index", "")
-                # projectile was just dopped on a dropzone
+                projectile.css("z-index", "") # reset z-index
+                # projectile was just dopped on a dropzone; the droppable's drop event was just called
                 if projectile.data("droppedOnDropZone") is true
                     projectile.data("droppedOnDropZone", false)
                 else 
                     projectilesHidden = +@optionElements.chartOptionsContainer.find("#chart-options-background").css("opacity") is 0
-                    if projectilesHidden
-                        @resetProjectile projectile
-                    else
-                        projectile.animate({
-                                left: +@optionElements.chartOptionsContainer.find("#chart-options-background").css("left").replace("px", "")
-                                top: "0px"
-                            }, {
-                            duration: @animationTime,
-                            specialEasing: {
-                                left: "easeOutQuad"
-                                top: "easeOutQuad"
-                            }
-                        })
+                    @resetProjectile projectile, projectilesHidden
         })
 
         # add in target options based on width of projectiles, and make them droppable
@@ -482,46 +444,43 @@ class ChartView extends CompositeElement
                     variables: targetVariables
                 )) if remainingVariables.length > 0
 
-        $(".dropzone").eq(0).droppable({
-            accept: ".projectile.ratioVariable"
-        })
-        $(".dropzone").eq(1).droppable({
-            accept: ".projectile"
-        })
+        acceptingClassSuffixes =
+            "Y": ".ratioVariable"
+            "X": ""
+            "PIVOT": ""
+            "SMULT": ""
+
+        for shelfName, shelf of @shelves
+            shelf.defineAcceptance ".projectile#{acceptingClassSuffixes[shelfName]}"
+
         $(".dropzone").droppable({
-            activeClass: "droppable-active",
+            activeClass: "droppable-would-accept",
             hoverClass: "droppable-hover",
             drop: (e, ui) =>
                 target = $(e.target)
                 projectile = $(ui.draggable)
+                
                 @dropOnDropZone target, projectile, false
-
-                @optionElements.chartOptionsContainer.find(".chart-options-moveme:not(.isOnTarget)").animate({
-                    opacity: 0.0
-                }, {
-                    duration: @animationTime,
-                    specialEasing: {
-                      opacity: "easeOutQuad"
-                    }
-                })
-
+                do @hideProjectiles # hide first, so any old projectiles will also hide
                 do @persist
                 do @initializeAxes
             out: (e, ui) =>
                 projectile = $(ui.draggable)
+                # removing projectile from a target
                 if projectile.hasClass("isOnTarget")
-                    target = $(e.target)
-                    target.removeClass("droppable-highlight")
                     projectile.removeClass("isOnTarget")
-
+                    target = $(e.target)
                     ord = +target.attr("data-order")
+                    shelf = @shelves[@constructor.ORD_TO_AXIS_SHELF[ord]]
+                    shelf.remove projectile
+
                     # @shelves[ord] = null
                     # TODO: allow multiples per shelf
-                    if ord == @constructor.X_AXIS_ORDINAL
-                        @shelves[@constructor.ORD_TO_AXIS_SHELF[ord]] = ""
-                    else
-                        index = @shelves[@constructor.ORD_TO_AXIS_SHELF[ord]].indexOf(projectile.name)
-                        @shelves[@constructor.ORD_TO_AXIS_SHELF[ord]].splice index, 1
+                    # if ord == @constructor.X_AXIS_ORDINAL
+                    #     @shelves[@constructor.ORD_TO_AXIS_SHELF[ord]] = ""
+                    # else
+                    #     index = @shelves[@constructor.ORD_TO_AXIS_SHELF[ord]].indexOf(projectile.name)
+                    #     @shelves[@constructor.ORD_TO_AXIS_SHELF[ord]].splice index, 1
                     
                     do @persist
                     do @initializeAxes
@@ -549,37 +508,81 @@ class ChartView extends CompositeElement
         # @varsY
 
 
+    showProjectiles: (left) =>
+        moveMe = @optionElements.chartOptionsContainer.find(".chart-options-moveme:not(.isOnTarget)")
 
+        # First, position at correct left position
+        moveMe.css( {
+            left: left + "px"
+        })
 
-    dropOnDropZone: (target, projectile, isDefault) =>
-        ord = +target.attr("data-order")
-        name = projectile.text().trim()
-        shelf = @shelves[@constructor.ORD_TO_AXIS_SHELF[ord]]
+        # Then, animate opacity change if hidden
+        if +moveMe.eq(0).css("opacity") is 0
+            moveMe.animate({
+                opacity: 1.0
+            }, {
+                duration: @animationTime,
+                specialEasing: {
+                  opacity: "easeOutQuad"
+                }
+            })
 
-        if not isDefault
-            oldName = shelf.addName(name)
-            if oldName?
-                oldProjectile = $("div.projectile[data-name='#{oldName}']")
-                @resetProjectile oldProjectile
-
-        shelf.positionOnShelf(projectile, isDefault, @animationTime)
-        if ord is @constructor.X_AXIS_ORDINAL then @chartOptions.justChanged = "x-axis"
-
-    resetProjectile: (projectile) =>
-            projectile.removeClass("isOnTarget")
-            projectile.animate({
+    hideProjectiles: =>
+        @optionElements.chartOptionsContainer.find(".chart-options-moveme:not(.isOnTarget)").animate({
                 opacity: 0.0
             }, {
                 duration: @animationTime,
                 specialEasing: {
-                    opacity: "easeOutQuad"
+                  opacity: "easeOutQuad"
                 }
-                complete: =>
-                    projectile.css({
-                        left: +@optionElements.chartOptionsContainer.find("#chart-options-background").css("left").replace("px", "")
-                        top: "0px"
-                    })
             })
+
+    dropOnDropZone: (target, projectile, isDefaultNotDropped) =>
+        ord = +target.attr("data-order")
+        name = projectile.text().trim()
+        shelf = @shelves[@constructor.ORD_TO_AXIS_SHELF[ord]]
+
+        if not isDefaultNotDropped
+            nameToRemove = shelf.addName name
+            if nameToRemove?
+                oldProjectile = $("div.projectile[data-name='#{nameToRemove}']")
+                @resetProjectile oldProjectile, true
+
+        shelf.add projectile, isDefaultNotDropped, @animationTime
+        if ord is @constructor.X_AXIS_ORDINAL then @chartOptions.justChanged = "x-axis"
+
+    resetProjectile: (projectile, shouldHide) =>
+            projectile.removeClass("isOnTarget")
+            left = +@optionElements.chartOptionsContainer.find("#chart-options-background").css("left").replace("px", "")
+
+            # make disappear and reset left attribute value
+            if shouldHide
+                projectile.animate({
+                    opacity: 0.0
+                }, {
+                    duration: @animationTime,
+                    specialEasing: {
+                        opacity: "easeOutQuad"
+                    }
+                    complete: =>
+                        projectile.css({
+                            left: left
+                            top: "0px"
+                        })
+                })
+
+            # return to position amongst other projectiles
+            else
+                projectile.animate({
+                        left: left
+                        top: "0px"
+                    }, {
+                    duration: @animationTime,
+                    specialEasing: {
+                        left: "easeOutQuad"
+                        top: "easeOutQuad"
+                    }
+                })
 
     render: =>
         # create a visualizable data from the table data and current axes/series configuration

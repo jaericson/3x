@@ -16,13 +16,19 @@ class ShelfSingular extends Shelf
         @axisName = @axisNames[0]
 
     addName: (axisName) =>
-        oldAxisName = @axisName
+        nameToRemove = @axisName
         @axisName = axisName
-        if oldAxisName isnt @axisName then oldAxisName else null
+        if nameToRemove isnt @axisName then nameToRemove else null
 
     getNames: =>
         return [@axisName]
 
     getVariables: (table) =>
         return ([@axisName].map (name) => table.columns[name])[0]
+
+    remove: (projectile) =>
+        target = $(".#{@dropzoneClass}").eq(@dropzoneIndex)
+        target.removeClass("droppable-not-empty")
+
+        @axisName = ""
 

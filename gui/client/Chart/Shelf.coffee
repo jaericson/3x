@@ -13,7 +13,7 @@ class Shelf
     constructor: (@axisNames, @dropzoneIndex) ->
         # Sets above parameters
         @dropzoneClass = "dropzone"
-        @heightPerProjectile = 26
+        @heightPerProjectile = 24
 
     addName: (axisName) =>
         @axisNames.push axisName
@@ -25,13 +25,18 @@ class Shelf
     getVariables: (table) =>
         return @axisNames.map (name) => table.columns[name]
 
-    positionOnShelf: (projectile, isDefault, animationTime) =>
+    defineAcceptance: (acceptingClass) =>
+        target = $(".#{@dropzoneClass}").eq(@dropzoneIndex)
+        target.droppable({
+            accept: acceptingClass
+        })
+
+    add: (projectile, isDefaultNotDropped, animationTime) =>
         # increase height of target to accomodate more variables
         target = $(".#{@dropzoneClass}").eq(@dropzoneIndex)
         target.css("height", @heightPerProjectile * @axisNames.length)
-        target.addClass("droppable-highlight")
+        target.addClass("droppable-not-empty")
 
-        projectile.data("droppedOnDropZone", true)
         projectile.addClass("isOnTarget")
         name = projectile.text().trim()
         index = @getNames().indexOf(name)
@@ -61,13 +66,14 @@ class Shelf
         newLeft = (projectileLeft - deltaX) + "px" 
         newTop = (projectileTop - deltaY) + "px"
 
-        if isDefault
+        if isDefaultNotDropped
             projectile.css({
                 left: newLeft
                 top: newTop
                 opacity: 1.0
             })
         else
+            projectile.data("droppedOnDropZone", true)
             projectile.animate({
                     left: newLeft
                     top: newTop
@@ -78,6 +84,26 @@ class Shelf
                     top: "swing"
                 },
             })
+
+    remove: (projectile) =>
+        target = $(".#{@dropzoneClass}").eq(@dropzoneIndex)
+
+        index = @axisNames.indexOf(projectile.attr("data-name"))
+        @axisNames.splice index, 1
+
+        # push projectiles up if after the index
+        for name, ix in @axisNames
+            if ix >= index
+                proj = $("div.projectile[data-name='#{name}']")
+                top = +proj.css("top").replace("px", "")
+                proj.css("top", top - @heightPerProjectile)
+
+        # if shelf empty, then remove not-empty class
+        if @axisNames.length == 0
+            target.removeClass("droppable-not-empty")
+        else
+            target.css("height", @heightPerProjectile * @axisNames.length)
+
 
 
 
