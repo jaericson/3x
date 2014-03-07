@@ -13,7 +13,10 @@ class Shelf
     constructor: (@axisNames, @dropzoneIndex) ->
         # Sets above parameters
         @dropzoneClass = "dropzone"
-        @heightPerProjectile = 24
+        @topPaddingPlusMargin    = 0 + 4 # as specified in style.less
+        @bottomPaddingPlusMargin = 4 + 4 # as specified in style.less
+        @baseHeightPerProjectile = 16 # as specified in style.less
+        @heightPerProjectile     = @baseHeightPerProjectile + @topPaddingPlusMargin + @bottomPaddingPlusMargin
 
     addName: (axisName) =>
         @axisNames.push axisName
@@ -34,7 +37,7 @@ class Shelf
     add: (projectile, isDefaultNotDropped, animationTime) =>
         # increase height of target to accomodate more variables
         target = $(".#{@dropzoneClass}").eq(@dropzoneIndex)
-        target.css("height", @heightPerProjectile * @axisNames.length)
+        target.css("height", @baseHeightPerProjectile + @heightPerProjectile * (@axisNames.length - 1))
         target.addClass("droppable-not-empty")
 
         projectile.addClass("isOnTarget")
@@ -102,7 +105,7 @@ class Shelf
         if @axisNames.length == 0
             target.removeClass("droppable-not-empty")
         else
-            target.css("height", @heightPerProjectile * @axisNames.length)
+            target.css("height", @baseHeightPerProjectile + @heightPerProjectile * (@axisNames.length - 1))
 
 
 

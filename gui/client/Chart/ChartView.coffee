@@ -450,8 +450,8 @@ class ChartView extends CompositeElement
             "PIVOT": ""
             "SMULT": ""
 
-        for shelfName, shelf of @shelves
-            shelf.defineAcceptance ".projectile#{acceptingClassSuffixes[shelfName]}"
+        for shelfKey, shelf of @shelves
+            shelf.defineAcceptance ".projectile#{acceptingClassSuffixes[shelfKey]}"
 
         $(".dropzone").droppable({
             activeClass: "droppable-would-accept",
