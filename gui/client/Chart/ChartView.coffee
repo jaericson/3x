@@ -103,7 +103,9 @@ class ChartView extends CompositeElement
             target = $(e.target)
             left = target.closest(".btn-group").offset().left
             top = target.closest(".btn-group").offset().top + target.closest(".btn-group").outerHeight()
-            @showProjectiles left, top
+
+            # this is a little hacky
+            @showProjectiles left, top, target.parents(".btn-group").next(".dropzone").outerHeight()
         )
 
         @optionElements.chartOptionsContainer.on("click", "i.icon-remove", (e) => do @hideProjectiles)
@@ -516,13 +518,16 @@ class ChartView extends CompositeElement
         # @varsY
 
 
-    showProjectiles: (left, top) =>
+    showProjectiles: (left, top, height) =>
         moveMe = @optionElements.chartOptionsContainer.find(".chart-options-moveme:not(.isOnTarget)")
 
         # First, position at correct left position
         moveMe.css( {
             left: left + "px"
+            top: (height - 24 + 16) + "px" # shelf is 24 pixels (outerHeight); give 16 pixels buffer
         })
+
+        moveMe.data("shiftY", (height - 24 + 16)) # need to remember this to reset projectile properly
 
         # Then, animate opacity change if hidden
         if +moveMe.eq(0).css("opacity") is 0
@@ -582,9 +587,11 @@ class ChartView extends CompositeElement
 
             # return to position amongst other projectiles
             else
+                shiftY = projectile.data("shiftY")
+
                 projectile.animate({
                         left: left
-                        top: "0px"
+                        top: "#{shiftY}px"
                     }, {
                     duration: @animationTime,
                     specialEasing: {
