@@ -388,11 +388,11 @@ class ChartView extends CompositeElement
         #     variables: remainingVariables
         # )) if remainingVariables.length > 0
 
-        # @typeSelection
-        #     .find("li.chart-type-li").remove().end()
-        #     .append(@constructor.CHART_PICK_CONTROL_SKELETON.render(
-        #         names: chartTypes
-        #     ))
+        @typeSelection
+            .find("li.chart-type-li").remove().end()
+            .append(@constructor.CHART_PICK_CONTROL_SKELETON.render(
+                names: chartTypes
+            ))
 
         @renderTargetsAndProjectiles axisCandidates, remainingVariables
         do @display

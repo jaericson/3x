@@ -9,6 +9,8 @@ _3X_ = require "3x"
 } =
 utils = require "utils"
 
+#TODO: hold onto the shelf instead of using a jQuery call to access it every time we need it?
+
 class Shelf
     constructor: (@axisNames, @dropzoneIndex) ->
         # Sets above parameters
@@ -29,9 +31,9 @@ class Shelf
 
     getVariables: (table) =>
         vars = @getVariablesHelper table
-
         # standardize no-units so that "undefined", "null", and an empty string all have empty string
-        vars[ord].unit = "" for ax,ord in vars when vars[ord]? and (not ax.unit? or not ax.unit.length? or ax.unit.length is 0)
+        if vars?
+            vars[ord].unit = "" for ax,ord in vars when vars[ord]? and (not ax.unit? or not ax.unit.length? or ax.unit.length is 0)
         return vars
 
     getVariablesHelper: (table) =>
@@ -100,11 +102,13 @@ class Shelf
                 },
             })
 
+    # used to temporarily expand when you're dragging an acceptable projectile
     expand: (projectile) =>
         # only expand if has accepting class
         if projectile.hasClass(@acceptanceClass)
             @adjustHeight true
 
+    # used to shrink back to fitted height after you're done dragging an acceptable projectile
     contract: (projectile) =>
         # only contract if has accepting class
         if projectile.hasClass(@acceptanceClass)
