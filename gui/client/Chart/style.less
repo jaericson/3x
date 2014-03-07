@@ -39,7 +39,7 @@ overflow: hidden;
   height: 200px;
   width: 500px;
   left: 0px;
-  top: 140px;
+  top: 145px;
 }
 
 #chart-options-projectiles, #chart-options-background {
@@ -50,6 +50,7 @@ overflow: hidden;
   border-radius: 4px 0px 4px 4px;
   -webkit-border-radius: 4px 0px 4px 4px;
   position: relative;
+  z-index: 5;
 }
 
 #chart-options-background {
@@ -94,17 +95,19 @@ overflow: hidden;
     text-align: center;
   }
 
+  /* this needs to be before would-accept so that
+  would-accept has precedence */
+  .droppable-not-empty {
+    background-color: #999;
+    border: 2px solid black;
+  }
+
   .droppable-would-accept {
     background-color: #ff0;
   }
 
   .droppable-hover {
     background-color: #ff0;
-    border: 2px solid black;
-  }
-
-  .droppable-not-empty {
-    background-color: #999;
     border: 2px solid black;
   }
 
@@ -130,6 +133,7 @@ overflow: hidden;
   left: 0px;
   top: 0px;
   opacity: 0.0;
+  z-index: 10;
 }
 
 .projectile:hover {

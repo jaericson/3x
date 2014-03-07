@@ -32,3 +32,9 @@ class ShelfSingular extends Shelf
 
         @axisName = ""
 
+    expand: () =>
+        # Not allowed to expand
+
+    contract: () =>
+        # Not allowed to contract
+

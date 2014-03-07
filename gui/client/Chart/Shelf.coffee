@@ -12,6 +12,7 @@ utils = require "utils"
 class Shelf
     constructor: (@axisNames, @dropzoneIndex) ->
         # Sets above parameters
+        @acceptanceClass = ""
         @dropzoneClass = "dropzone"
         @topPaddingPlusMargin    = 0 + 4 # as specified in style.less
         @bottomPaddingPlusMargin = 4 + 4 # as specified in style.less
@@ -29,10 +30,13 @@ class Shelf
         return @axisNames.map (name) => table.columns[name]
 
     defineAcceptance: (acceptingClass) =>
+        @acceptanceClass = acceptingClass
+        acceptingClass = if acceptingClass isnt "" then ".projectile.#{acceptingClass}" else ".projectile"
         target = $(".#{@dropzoneClass}").eq(@dropzoneIndex)
         target.droppable({
             accept: acceptingClass
         })
+        
 
     add: (projectile, isDefaultNotDropped, animationTime) =>
         # increase height of target to accomodate more variables
@@ -87,6 +91,31 @@ class Shelf
                     top: "swing"
                 },
             })
+
+    expand: (projectile) =>
+        # only expand if has accepting class
+        if projectile.hasClass(@acceptanceClass)
+            @adjustHeight true
+
+    contract: (projectile) =>
+        # only contract if has accepting class
+        if projectile.hasClass(@acceptanceClass)
+            @adjustHeight false
+
+    adjustHeight: (shouldExpand) =>
+        target = $(".#{@dropzoneClass}").eq(@dropzoneIndex)
+
+        inflated = if shouldExpand then 1 else 0
+        numNames = _.max([@axisNames.length - 1 + inflated, 0])
+        target.css("height", @baseHeightPerProjectile + @heightPerProjectile * numNames)
+
+        scale = if shouldExpand then 1 else -1
+
+        # readjust projectiles
+        for name, ix in @axisNames
+            proj = $("div.projectile[data-name='#{name}']")
+            top = +proj.css("top").replace("px", "")
+            proj.css("top", top + scale * @heightPerProjectile)
 
     remove: (projectile) =>
         target = $(".#{@dropzoneClass}").eq(@dropzoneIndex)

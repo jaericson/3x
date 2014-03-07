@@ -101,7 +101,9 @@ class ChartView extends CompositeElement
         # mouseover to display projectiles
         @optionElements.chartOptionsContainer.find("#chart-options-dropzones").on("mouseover", (e) =>
             target = $(e.target)
-            @showProjectiles target.closest(".btn-group").offset().left
+            left = target.closest(".btn-group").offset().left
+            top = target.closest(".btn-group").offset().top + target.closest(".btn-group").outerHeight()
+            @showProjectiles left, top
         )
 
         @optionElements.chartOptionsContainer.on("click", "i.icon-remove", (e) => do @hideProjectiles)
@@ -405,15 +407,21 @@ class ChartView extends CompositeElement
         $(".projectile").draggable({
             start: (e) => 
                 projectile = $(e.target)
-                projectile.css("z-index", 2) # always want currently-dragging projectile to appear in front of other projectiles
+                projectile.css("z-index", 11) # always want currently-dragging projectile to appear in front of other projectiles
+                for shelfKey, shelf of @shelves
+                    shelf.expand projectile
 
             stop: (e) =>
                 projectile = $(e.target)
-                projectile.css("z-index", "") # reset z-index
+
+                for shelfKey, shelf of @shelves
+                    shelf.contract projectile
+
                 # projectile was just dopped on a dropzone; the droppable's drop event was just called
                 if projectile.data("droppedOnDropZone") is true
                     projectile.data("droppedOnDropZone", false)
                 else 
+                    projectile.css("z-index", 10) # reset z-index
                     projectilesHidden = +@optionElements.chartOptionsContainer.find("#chart-options-background").css("opacity") is 0
                     @resetProjectile projectile, projectilesHidden
         })
@@ -445,13 +453,13 @@ class ChartView extends CompositeElement
                 )) if remainingVariables.length > 0
 
         acceptingClassSuffixes =
-            "Y": ".ratioVariable"
+            "Y": "ratioVariable"
             "X": ""
             "PIVOT": ""
             "SMULT": ""
 
         for shelfKey, shelf of @shelves
-            shelf.defineAcceptance ".projectile#{acceptingClassSuffixes[shelfKey]}"
+            shelf.defineAcceptance acceptingClassSuffixes[shelfKey]
 
         $(".dropzone").droppable({
             activeClass: "droppable-would-accept",
@@ -508,7 +516,7 @@ class ChartView extends CompositeElement
         # @varsY
 
 
-    showProjectiles: (left) =>
+    showProjectiles: (left, top) =>
         moveMe = @optionElements.chartOptionsContainer.find(".chart-options-moveme:not(.isOnTarget)")
 
         # First, position at correct left position
@@ -548,6 +556,7 @@ class ChartView extends CompositeElement
                 oldProjectile = $("div.projectile[data-name='#{nameToRemove}']")
                 @resetProjectile oldProjectile, true
 
+        projectile.css("z-index", 2)
         shelf.add projectile, isDefaultNotDropped, @animationTime
         if ord is @constructor.X_AXIS_ORDINAL then @chartOptions.justChanged = "x-axis"
 
