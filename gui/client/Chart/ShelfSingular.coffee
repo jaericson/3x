@@ -23,7 +23,7 @@ class ShelfSingular extends Shelf
     getNames: =>
         return [@axisName]
 
-    getVariables: (table) =>
+    getVariablesHelper: (table) =>
         return ([@axisName].map (name) => table.columns[name])[0]
 
     remove: (projectile) =>

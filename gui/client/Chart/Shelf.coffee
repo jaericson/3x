@@ -20,13 +20,21 @@ class Shelf
         @heightPerProjectile     = @baseHeightPerProjectile + @topPaddingPlusMargin + @bottomPaddingPlusMargin
 
     addName: (axisName) =>
-        @axisNames.push axisName
+        if @axisNames.indexOf(axisName) is -1 # no duplicates
+            @axisNames.push axisName
         return null
 
     getNames: =>
         return @axisNames
 
     getVariables: (table) =>
+        vars = @getVariablesHelper table
+
+        # standardize no-units so that "undefined", "null", and an empty string all have empty string
+        vars[ord].unit = "" for ax,ord in vars when vars[ord]? and (not ax.unit? or not ax.unit.length? or ax.unit.length is 0)
+        return vars
+
+    getVariablesHelper: (table) =>
         return @axisNames.map (name) => table.columns[name]
 
     defineAcceptance: (acceptingClass) =>

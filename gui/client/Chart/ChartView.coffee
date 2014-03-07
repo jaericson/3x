@@ -167,8 +167,9 @@ class ChartView extends CompositeElement
     @PROJECTILE_OPTION: $("""
         <script type="text/x-jsrender">
             {{for variables}}
-                <div class="chart-options-moveme projectile{{if isRatio}} ratioVariable{{/if}}" data-name="{{>name}}">
+                <div class="chart-options-moveme unit-{{>unit}} projectile{{if isRatio}} ratioVariable{{/if}}" data-name="{{>name}}">
                     <i class="icon icon-{{if isMeasured}}dashboard{{else}}tasks{{/if}}"></i> {{>name}}</div>
+
             {{/for}}
         </script>
         """)
@@ -252,7 +253,7 @@ class ChartView extends CompositeElement
             # below logic will add to the axis candidates any expanded input variable or any rendered measured output variable
             # columns are not rendered if they are unchecked in the left-hand panel
             (col for col in @table.columnsRendered when col.isExpanded or col.isMeasured)
-        axisCandidates[ord].unit = null for ax,ord in axisCandidates when not ax.unit? or not ax.unit.length? or ax.unit.length is 0
+        axisCandidates[ord].unit = "" for ax,ord in axisCandidates when not ax.unit? or not ax.unit.length? or ax.unit.length is 0
         nominalVariables =
             (axisCand for axisCand in axisCandidates when utils.isNominal axisCand.type)
         ratioVariables =
@@ -284,9 +285,9 @@ class ChartView extends CompositeElement
         # collect ResultsTable columns that corresponds to the @shelves
 
         cachedX = try JSON.parse localStorage["shelfX"]
-        cachedX?= ["numAccess.mean"]
-        # cachedY = try JSON.parse localStorage["shelfY"]
-        cachedY= ["ratioSortedIn.mean"]
+        cachedX?= [nominalVariables[0]?.name ? ratioVariables[1]?.name]
+        cachedY = try JSON.parse localStorage["shelfY"]
+        cachedY= [ratioVariables[0]?.name]
 
         @shelves?= {
             "Y": new ShelfMultiple cachedY, 0
@@ -460,6 +461,8 @@ class ChartView extends CompositeElement
             "PIVOT": ""
             "SMULT": ""
 
+        if @varsY? and @varsY.length > 0 then acceptingClassSuffixes.Y = "unit-#{@varsY[0].unit}"
+
         for shelfKey, shelf of @shelves
             shelf.defineAcceptance acceptingClassSuffixes[shelfKey]
 
@@ -527,7 +530,7 @@ class ChartView extends CompositeElement
             top: (height - 24 + 16) + "px" # shelf is 24 pixels (outerHeight); give 16 pixels buffer
         })
 
-        moveMe.data("shiftY", (height - 24 + 16)) # need to remember this to reset projectile properly
+        @optionElements.chartOptionsContainer.find(".projectile").data("shiftY", (height - 24 + 16)) # need to remember this to reset projectile properly
 
         # Then, animate opacity change if hidden
         if +moveMe.eq(0).css("opacity") is 0
@@ -603,7 +606,7 @@ class ChartView extends CompositeElement
     render: =>
         # create a visualizable data from the table data and current axes/series configuration
         # but only if there is a valid varX and varsY
-        if not @varX? or not @varsY?
+        if not @varX? or not @varsY? or @varsY.length is 0
             return
 
         @chartData = new ChartData @table, @varX, @varsY, @varsPivot
