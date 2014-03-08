@@ -96,7 +96,7 @@ class ChartView extends CompositeElement
         # @optionElements.chartOptionsContainer.find("#chart-options-background-container").css("top", (top + 25) + "px")
         # @optionElements.chartOptionsContainer.find("#chart-options-projectile-container").css("top", (top + 25) + "px")
         
-        @animationTime = 400
+        @animationTime = 100
         
         # mouseover to display projectiles
         @optionElements.chartOptionsContainer.find("#chart-options-dropzones").on("mouseover", (e) =>
@@ -521,8 +521,23 @@ class ChartView extends CompositeElement
         # @varsY
 
 
+    moveContainers: (toMoveIn) =>
+        left = if toMoveIn then 0 else -600 # this should match left CSS value for containers
+        adj = if toMoveIn then -600 else 600
+
+        containers = @optionElements.chartOptionsContainer.find("#chart-options-background-container, #chart-options-projectile-container")
+        if +containers.css("left").replace("px", "") isnt left
+            containers.css("left", left)
+            onTargets = @optionElements.chartOptionsContainer.find(".projectile.isOnTarget")
+            for t in onTargets
+                left = +$(t).css("left").replace("px", "")
+                $(t).css("left", left + adj)
+
+
     showProjectiles: (left, top, height) =>
         moveMe = @optionElements.chartOptionsContainer.find(".chart-options-moveme:not(.isOnTarget)")
+
+        @moveContainers true
 
         # First, position at correct left position
         moveMe.css( {
@@ -537,7 +552,7 @@ class ChartView extends CompositeElement
             moveMe.animate({
                 opacity: 1.0
             }, {
-                duration: @animationTime,
+                duration: @animationTime
                 specialEasing: {
                   opacity: "easeOutQuad"
                 }
@@ -547,10 +562,12 @@ class ChartView extends CompositeElement
         @optionElements.chartOptionsContainer.find(".chart-options-moveme:not(.isOnTarget)").animate({
                 opacity: 0.0
             }, {
-                duration: @animationTime,
+                duration: @animationTime
                 specialEasing: {
                   opacity: "easeOutQuad"
                 }
+                complete: =>
+                    @moveContainers false
             })
 
     dropOnDropZone: (target, projectile, isDefaultNotDropped) =>
