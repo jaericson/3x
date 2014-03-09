@@ -14,14 +14,16 @@ utils = require "utils"
 class Shelf
     constructor: (@axisNames, @dropzoneIndex) ->
         # Sets above parameters
-        @acceptanceClass = ""
+        @strictAcceptance = null
+        @looseAcceptance = null
         @dropzoneClass = "dropzone"
         @topPaddingPlusMargin    = 0 + 4 # as specified in style.less
         @bottomPaddingPlusMargin = 4 + 4 # as specified in style.less
         @baseHeightPerProjectile = 16 # as specified in style.less
         @heightPerProjectile     = @baseHeightPerProjectile + @topPaddingPlusMargin + @bottomPaddingPlusMargin
 
-    addName: (axisName) =>
+    addName: (projectile) =>
+        axisName = projectile.text().trim()
         if @axisNames.indexOf(axisName) is -1 # no duplicates
             @axisNames.push axisName
         return null
@@ -39,14 +41,18 @@ class Shelf
     getVariablesHelper: (table) =>
         return @axisNames.map (name) => table.columns[name]
 
-    defineAcceptance: (acceptingClass) =>
-        @acceptanceClass = acceptingClass
-        acceptingClass = if acceptingClass isnt "" then ".projectile.#{acceptingClass}" else ".projectile"
+    strictlyAccept: (className) =>
+        @strictAcceptance = className
+        acceptingClass = ".projectile"
+        acceptingClass += if @strictAcceptance? then ".#{@strictAcceptance}" else ""
+
         target = $(".#{@dropzoneClass}").eq(@dropzoneIndex)
         target.droppable({
             accept: acceptingClass
         })
-        
+
+    looselyAccept: (className) =>
+        @looseAcceptance = className
 
     add: (projectile, isDefaultNotDropped, animationTime) =>
         # increase height of target to accomodate more variables
@@ -104,14 +110,14 @@ class Shelf
 
     # used to temporarily expand when you're dragging an acceptable projectile
     expand: (projectile) =>
-        # only expand if has accepting class
-        if projectile.hasClass(@acceptanceClass)
+        # only expand if has loose accepting class
+        if not @looseAcceptance? or projectile.hasClass(@looseAcceptance)
             @adjustHeight true
 
     # used to shrink back to fitted height after you're done dragging an acceptable projectile
     contract: (projectile) =>
         # only contract if has accepting class
-        if projectile.hasClass(@acceptanceClass)
+        if not @looseAcceptance? or projectile.hasClass(@looseAcceptance)
             @adjustHeight false
 
     adjustHeight: (shouldExpand) =>

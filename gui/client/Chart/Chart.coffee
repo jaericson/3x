@@ -267,9 +267,12 @@ class Chart
         unitStr = if unit then "(#{unit})" else ""
         if axis.vars?.length == 1
             "#{axis.vars[0].name}#{if unitStr then " " else ""}#{unitStr}"
-        else
+        else if axis.vars?.length == 2
             names = _.pluck(axis.vars, "name").join(", ")
             "#{names} #{unitStr}"
+        else
+            names = _.pluck(axis.vars[0..1], "name").join(", ")
+            "#{names}, etc. #{unitStr}"
 
     formatDataPoint: (varY) =>
         vars = @data.relatedVarsFor(varY)

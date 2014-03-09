@@ -15,10 +15,11 @@ class ShelfSingular extends Shelf
         super args...
         @axisName = @axisNames[0]
 
-    addName: (axisName) =>
+    addName: (projectile) =>
+        axisName = projectile.text().trim()
         nameToRemove = @axisName
         @axisName = axisName
-        if nameToRemove isnt @axisName then nameToRemove else null
+        if nameToRemove isnt @axisName then [nameToRemove] else null
 
     getNames: =>
         return [@axisName]

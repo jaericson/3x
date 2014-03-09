@@ -23,6 +23,7 @@ LineChart = require "LineChart"
 Shelf = require "Shelf"
 ShelfSingular = require "ShelfSingular"
 ShelfMultiple = require "ShelfMultiple"
+ShelfOneUnit = require "ShelfOneUnit"
 
 class ChartView extends CompositeElement
     constructor: (@baseElement, @typeSelection, @axesControl, @table, @optionElements = {}) ->
@@ -290,7 +291,7 @@ class ChartView extends CompositeElement
         cachedY?= [ratioVariables[0]?.name]
 
         @shelves?= {
-            "Y": new ShelfMultiple cachedY, 0
+            "Y": new ShelfOneUnit cachedY, 0
             "X": new ShelfSingular cachedX, 1
             "PIVOT": new ShelfMultiple [], 2
             "SMULT": new ShelfMultiple [], 3
@@ -455,16 +456,21 @@ class ChartView extends CompositeElement
                     variables: targetVariables
                 )) if remainingVariables.length > 0
 
-        acceptingClassSuffixes =
+        strictAcceptingClasses =
             "Y": "ratioVariable"
-            "X": ""
-            "PIVOT": ""
-            "SMULT": ""
+            "X": null
+            "PIVOT": null
+            "SMULT": null
 
-        if @varsY? and @varsY.length > 0 then acceptingClassSuffixes.Y = "unit-#{@varsY[0].unit}"
+        looseAcceptingClasses =
+            "Y": if @varsY? and @varsY.length > 0 then "unit-#{@varsY[0].unit}" else null
+            "X": null
+            "PIVOT": null
+            "SMULT": null
 
         for shelfKey, shelf of @shelves
-            shelf.defineAcceptance acceptingClassSuffixes[shelfKey]
+            shelf.strictlyAccept strictAcceptingClasses[shelfKey]
+            shelf.looselyAccept looseAcceptingClasses[shelfKey]
 
         $(".dropzone").droppable({
             activeClass: "droppable-would-accept",
@@ -572,14 +578,14 @@ class ChartView extends CompositeElement
 
     dropOnDropZone: (target, projectile, isDefaultNotDropped) =>
         ord = +target.attr("data-order")
-        name = projectile.text().trim()
         shelf = @shelves[@constructor.ORD_TO_AXIS_SHELF[ord]]
 
         if not isDefaultNotDropped
-            nameToRemove = shelf.addName name
-            if nameToRemove?
-                oldProjectile = $("div.projectile[data-name='#{nameToRemove}']")
-                @resetProjectile oldProjectile, true
+            namesToRemove = shelf.addName projectile
+            if namesToRemove?
+                for nameToRemove in namesToRemove
+                    oldProjectile = $("div.projectile[data-name='#{nameToRemove}']")
+                    @resetProjectile oldProjectile, true
 
         projectile.css("z-index", 2)
         shelf.add projectile, isDefaultNotDropped, @animationTime
