@@ -287,7 +287,7 @@ class ChartView extends CompositeElement
         cachedX = try JSON.parse localStorage["shelfX"]
         cachedX?= [nominalVariables[0]?.name ? ratioVariables[1]?.name]
         cachedY = try JSON.parse localStorage["shelfY"]
-        cachedY= [ratioVariables[0]?.name]
+        cachedY?= [ratioVariables[0]?.name]
 
         @shelves?= {
             "Y": new ShelfMultiple cachedY, 0

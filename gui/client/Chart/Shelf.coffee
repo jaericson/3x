@@ -72,7 +72,7 @@ class Shelf
         projectileLeft   = +projectile.css("left").replace("px", "")
         projectileTop    = +projectile.css("top").replace("px", "")
 
-        centerOnTarget = (targetH / @axisNames.length - projectileH) / 2
+        centerOnTarget = @topPaddingPlusMargin / 2
         slotDownward = @heightPerProjectile * index
         deltaY = projectileOffset.top - slotDownward - (targetOffset.top + centerOnTarget)
         
@@ -140,6 +140,7 @@ class Shelf
             if ix >= index
                 proj = $("div.projectile[data-name='#{name}']")
                 top = +proj.css("top").replace("px", "")
+                console.log "Previous Top: #{top}; Move Down: #{@heightPerProjectile}; New Top: #{top - @heightPerProjectile}"
                 proj.css("top", top - @heightPerProjectile)
 
         # if shelf empty, then remove not-empty class
