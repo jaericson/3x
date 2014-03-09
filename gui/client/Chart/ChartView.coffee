@@ -103,6 +103,8 @@ class ChartView extends CompositeElement
     persist: =>
         localStorage["shelfX"] = JSON.stringify @shelves.X.getNames()
         localStorage["shelfY"] = JSON.stringify @shelves.Y.getNames()
+        localStorage["shelfPivot"] = JSON.stringify @shelves.PIVOT.getNames()
+        localStorage["shelfSmult"] = JSON.stringify @shelves.SMULT.getNames()
         localStorage["chartType"] = JSON.stringify @chartType
 
     # axis change dropdown HTML skeleton
@@ -275,14 +277,18 @@ class ChartView extends CompositeElement
         cachedX = try JSON.parse localStorage["shelfX"]
         cachedX?= [nominalVariables[0]?.name ? ratioVariables[1]?.name]
         cachedY = try JSON.parse localStorage["shelfY"]
-        cachedY?= [ratioVariables[0]?.name]
+        cachedY?= [ratioVariables[0]?.name ? ratioVariables[0]?.name]
+        cachedPivot = try JSON.parse localStorage["shelfPivot"]
+        cachedPivot?= [nominalVariables[1]?.name ? nominalVariables[1]?.name]
+        # cachedSmult = try JSON.parse localStorage["shelfSmult"]
+        # cachedSmult?= [nominalVariables[2]?.name ? nominalVariables[2]?.name]
+        cachedSmult = ["inputType"]
 
-        @shelves?= {
+        @shelves?=
             "Y": new ShelfOneUnit cachedY, 0
             "X": new ShelfSingular cachedX, 1
-            "PIVOT": new ShelfMultiple [], 2
-            "SMULT": new ShelfMultiple [], 3
-        }
+            "PIVOT": new ShelfMultiple cachedPivot, 2
+            "SMULT": new ShelfMultiple cachedSmult, 3
 
         # @vars = @shelves.map (name) => @table.columns[name]
 
@@ -483,9 +489,23 @@ class ChartView extends CompositeElement
                 @dropOnDropZone target, projectile, true
 
         if @varsY?
-            for vY in @varsY
-                projectile = $("div.projectile[data-name='#{vY.name}']")
+            for v in @varsY
+                projectile = $("div.projectile[data-name='#{v.name}']")
                 target = $("div.dropzone").eq(@constructor.Y_AXIS_ORDINAL)
+                if not projectile.hasClass("isOnTarget")
+                    @dropOnDropZone target, projectile, true
+
+        if @varsPivot?
+            for v in @varsPivot
+                projectile = $("div.projectile[data-name='#{v.name}']")
+                target = $("div.dropzone").eq(@constructor.PIVOT_AXIS)
+                if not projectile.hasClass("isOnTarget")
+                    @dropOnDropZone target, projectile, true
+
+        if @varsSmult?
+            for v in @varsSmult
+                projectile = $("div.projectile[data-name='#{v.name}']")
+                target = $("div.dropzone").eq(@constructor.SMULT_AXIS)
                 if not projectile.hasClass("isOnTarget")
                     @dropOnDropZone target, projectile, true
 
@@ -602,10 +622,17 @@ class ChartView extends CompositeElement
     render: =>
         # create a visualizable data from the table data and current axes/series configuration
         # but only if there is a valid varX and varsY
-        if not @varX? or not @varsY? or @varsY.length is 0
-            return
+        return if not @varX? or not @varsY? or @varsY.length is 0
 
-        @chartData = new ChartData @table, @varX, @varsY, @varsPivot
+        @smChartData = new ChartData @table, @varX, @varsY, @varsSmult
+        idsBySeries = @smChartData.idsBySeries
+        chartData = []
+        for seriesName, ids of idsBySeries
+            chartData.push(new ChartData @table, @varX, @varsY, @varsSmult, ids)
+        
+        numCharts = chartData.length
+
+        # chartData = new ChartData @table, @varX, @varsY, @varsPivot
 
         do @renderTitle
 
@@ -621,11 +648,21 @@ class ChartView extends CompositeElement
                 else
                     throw new Error "#{@chartType}: unknown chart type"
 
+        for i in [0..numCharts-1]
+            @baseElement.append("<div class='small-multiple' style='float:left'></div>")
+
+        gridN = Math.ceil(Math.sqrt numCharts)
+
+        dimensions =
+            chartWidth: (window.innerWidth  - @baseElement.position().left * 2) / gridN
+            chartHeight: (window.innerHeight - @baseElement.position().top - 20) / gridN
+
         # create and render the chart
         # TODO reuse the created chart?
-        @chart = new chartClass @baseElement, @chartData, @chartOptions,
-            @optionElements # TODO don't pass optionElements, but listen to change events from @chartOptions
-        do @chart.render
+        for i in [0..numCharts-1]
+            chart = new chartClass @baseElement.find("div.small-multiple").eq(i), chartData[i], @chartOptions, dimensions,
+                @optionElements # TODO don't pass optionElements, but listen to change events from @chartOptions
+            do chart.render
 
 
     renderTitle: =>

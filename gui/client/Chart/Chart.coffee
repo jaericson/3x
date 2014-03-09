@@ -10,7 +10,7 @@ _3X_ = require "3x"
 utils = require "utils"
 
 class Chart
-    constructor: (@baseElement, @data, @chartOptions, @optionElements) ->
+    constructor: (@baseElement, @data, @chartOptions, @dimensions, @optionElements) ->
         @type = null # TODO REFACTORING instead of branching off with @type, override with subclasses
 
     render: =>
@@ -64,8 +64,10 @@ class Chart
     createSVG: => ## Determine the chart dimension and initialize the SVG root as @svg
             chartBody = d3.select(@baseElement[0])
             @baseElement.find("style").remove().end().append(@constructor.SVG_STYLE_SHEET)
-            chartWidth  = window.innerWidth  - @baseElement.position().left * 2
-            chartHeight = window.innerHeight - @baseElement.position().top - 20
+            # chartWidth  = window.innerWidth  - @baseElement.position().left * 2
+            # chartHeight = window.innerHeight - @baseElement.position().top - 20
+            chartWidth = @dimensions.chartWidth
+            chartHeight = @dimensions.chartHeight
             @baseElement.css
                 width:  "#{chartWidth }px"
                 height: "#{chartHeight}px"
