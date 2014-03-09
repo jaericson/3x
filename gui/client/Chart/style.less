@@ -34,13 +34,20 @@ overflow: hidden;
   font-size: 14px;
 }
 
+#chart-type {
+  float: left;
+  margin: 0px 5px 0px 0px;
+  width: 100px; /* if the width is smaller than the max width it can be, shelf positioning will shift and mess up projectie placement */
+}
+
 #chart-options-container {
   display: inline-block;
+  width: 100%;
 }
 
 #chart-options-projectile-container, #chart-options-background-container {
   position: absolute;
-  height: 200px;
+  /*height: 200px;*/
   width: 500px;
   left: -600px;
   top: 145px;
@@ -48,7 +55,7 @@ overflow: hidden;
 
 #chart-options-projectiles, #chart-options-background {
   width: 480px;
-  height: 200px;
+  /*height: 200px;*/
   float: left;
   opacity: 0.9;
   border-radius: 4px 0px 4px 4px;

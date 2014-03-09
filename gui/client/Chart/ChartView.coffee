@@ -26,21 +26,13 @@ ShelfMultiple = require "ShelfMultiple"
 ShelfOneUnit = require "ShelfOneUnit"
 
 class ChartView extends CompositeElement
-    constructor: (@baseElement, @typeSelection, @axesControl, @table, @optionElements = {}) ->
+    constructor: (@baseElement, @typeSelection, @table, @optionElements = {}) ->
         super @baseElement
 
         # use local storage to remember previous chart type
         @chartType = try JSON.parse localStorage["chartType"]
 
-        # axis-change are the currently used axis pickers; axis-add is the 1 that lets you add more (and has a ...)
-        # @axesControl
-        #     .on("click", ".axis-add    .axis-var", @actionHandlerForAxisControl @handleAxisAddition)
-        #     .on("click", ".axis-change .axis-var", @actionHandlerForAxisControl @handleAxisChange)
-        #     .on("click", ".axis-change .axis-remove", @actionHandlerForAxisControl @handleAxisRemoval)
-
-        @typeSelection
-            .on("click", ".chart-type-li", @actionHandlerForChartTypeControl @handleChartTypeChange)
-
+        @typeSelection.on("click", ".chart-type-li", @actionHandlerForChartTypeControl @handleChartTypeChange)
         @table.on "changed", @initializeAxes
         @table.on "updated", @display
 
@@ -91,13 +83,8 @@ class ChartView extends CompositeElement
         @optionElements.toggleOrigin =
             $(forEachAxisOptionElement "toggleOrigin", "origin", installToggleHandler)
                 .toggleClass("disabled", true)
-
-        # set absolute position top of projectile container and corresponding background container
-        # top = @optionElements.chartOptionsContainer.find("#chart-options-dropzones").offset().top
-        # @optionElements.chartOptionsContainer.find("#chart-options-background-container").css("top", (top + 25) + "px")
-        # @optionElements.chartOptionsContainer.find("#chart-options-projectile-container").css("top", (top + 25) + "px")
         
-        @animationTime = 100
+        @animationTime = 150
         
         # mouseover to display projectiles
         @optionElements.chartOptionsContainer.find("#chart-options-dropzones").on("mouseover", (e) =>
@@ -261,7 +248,7 @@ class ChartView extends CompositeElement
             (axisCand for axisCand in axisCandidates when utils.isRatio axisCand.type)
         # check if there are enough variables to construct a two-dimensional chart: if so, add toggle buttons on RHS, if not, show a message
         canDrawChart = (possible) =>
-            @baseElement.add(@optionElements.chartOptions).toggleClass("hide", not possible)
+            @baseElement.add(@optionElements.chartOptionsContainer).toggleClass("hide", not possible)
             @optionElements.alertChartImpossible?.toggleClass("hide", possible)
         # we need at least 1 ratio variable and 2 variables total
         if ratioVariables.length >= 1 and nominalVariables.length + ratioVariables.length >= 2
@@ -371,23 +358,6 @@ class ChartView extends CompositeElement
                 else
                     axisCandidates
             ).filter((col) => col.name not in @shelves)
-        # render the controls
-        # @axesControl
-        #     .find(".axis-control").remove().end()
-        #     .append(
-        #         for ax,ord in @vars
-        #             @constructor.AXIS_PICK_CONTROL_SKELETON.render({
-        #                 ord: ord
-        #                 axis: ax
-        #                 variables: (if ord is @constructor.Y_AXIS_ORDINAL then ratioVariables else if ord is @constructor.X_AXIS_ORDINAL then axisCandidates else remainingVariables)
-        #                             # the first axis (Y) must always be of ratio type
-        #                     .filter((col) => col not in @vars[0..ord]) # and without the current one
-        #                 isOptional: (ord > 1) # there always has to be at least two axes
-        #             })
-        #     )
-        # @axesControl.append(@constructor.AXIS_ADD_CONTROL_SKELETON.render(
-        #     variables: remainingVariables
-        # )) if remainingVariables.length > 0
 
         @typeSelection
             .find("li.chart-type-li").remove().end()
@@ -518,6 +488,9 @@ class ChartView extends CompositeElement
                 target = $("div.dropzone").eq(@constructor.Y_AXIS_ORDINAL)
                 if not projectile.hasClass("isOnTarget")
                     @dropOnDropZone target, projectile, true
+
+        h = $("#chart-options-projectiles").height()
+        $("#chart-options-background").css("height", h)
 
         # @varX      = @vars[@constructor.X_AXIS_ORDINAL]
         # # pivot variables in an array if there are additional nominal variables
