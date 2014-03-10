@@ -1,7 +1,7 @@
 utils = require "utils"
 
 class ChartData
-    constructor: (@_table, @varX, @varsY, @varsPivot, @subsetIDs) -> #subsetIDs used for only ids associated with a small multiple
+    constructor: (@_table, @varX, @varsY, @varsPivot, @subsetIDs, @seriesName) -> #subsetIDs and seriesName used for only ids associated with a small multiple
         # collect data to plot from @_table
         $trs = @_table.baseElement.find("tbody tr")
         @subsetIDs?= $trs.map((i, tr) -> +tr.dataset.ordinal).get()

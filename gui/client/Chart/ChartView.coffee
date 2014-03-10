@@ -628,7 +628,7 @@ class ChartView extends CompositeElement
         idsBySeries = @smChartData.idsBySeries
         chartData = []
         for seriesName, ids of idsBySeries # if no series, idsBySeries will contain all the indices
-            chartData.push(new ChartData @table, @varX, @varsY, @varsSmult, ids)
+            chartData.push(new ChartData @table, @varX, @varsY, @varsPivot, ids, seriesName)
         numCharts = chartData.length
 
         do @renderTitle

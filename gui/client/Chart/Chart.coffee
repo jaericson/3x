@@ -166,8 +166,7 @@ class Chart
             .attr("x", @width/2)
             .attr("y", -@margin.top/2)
             .style("text-anchor", "middle")
-            .text(Object.keys(@data.idsBySeries)[0])
-
+            .text(if @data.seriesName? then @data.seriesName else "") 
 
     renderData: =>
         # See: https://github.com/mbostock/d3/wiki/Ordinal-Scales#wiki-category10

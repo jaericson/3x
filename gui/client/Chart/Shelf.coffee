@@ -112,13 +112,17 @@ class Shelf
     expand: (projectile) =>
         # only expand if has loose accepting class
         if not @looseAcceptance? or projectile.hasClass(@looseAcceptance)
-            @adjustHeight true
+            # only need to expand shelf if doesn't have this projectile
+            # if @getNames().indexOf(projectile.attr("data-name")) is -1
+                @adjustHeight true
 
     # used to shrink back to fitted height after you're done dragging an acceptable projectile
     contract: (projectile) =>
         # only contract if has accepting class
         if not @looseAcceptance? or projectile.hasClass(@looseAcceptance)
-            @adjustHeight false
+            # only need to contract shelf if doesn't have this projectile
+            # if @getNames().indexOf(projectile.attr("data-name")) is -1
+                @adjustHeight false
 
     adjustHeight: (shouldExpand) =>
         target = $(".#{@dropzoneClass}").eq(@dropzoneIndex)
