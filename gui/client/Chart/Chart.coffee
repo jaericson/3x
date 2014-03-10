@@ -82,17 +82,18 @@ class Chart
                 if axisY.isLogScaleEnabled
                     axisY.axis = axisY.axis.tickFormat((d, ix) -> 
                         formatter = d3.format(".3s")
+                        # right now, showing every-other; TODO be smarter about this, adjusting for height of viz
                         if ix % 2 == 0 
                             tmp = formatter d
-                            tmp = tmp.replace(/0*$/, "")
-                            tmp.replace(/\.$/, "")
+                            tmp = tmp.replace(/(\.[1-9]*)0*([a-zA-Z]*)$/, (match, group1, group2) -> "#{group1}#{group2}") # remove trailing 0's if decimal place present
+                            tmp.replace(/\.([a-zA-Z]*)$/, (match, group1) -> "#{group1}") # remove final decimal place if no numbers trail it
                         else "")
                 else
                     axisY.axis = axisY.axis.tickFormat((d, ix) -> 
                         formatter = d3.format(".3s")
                         tmp = formatter d
-                        tmp = tmp.replace(/0*$/, "")
-                        tmp.replace(/\.$/, "")
+                        tmp = tmp.replace(/(\.[1-9]*)0*([a-zA-Z]*)$/, (match, group1, group2) -> "#{group1}#{group2}") # remove trailing 0's if decimal place present
+                        tmp.replace(/\.([a-zA-Z]*)$/, (match, group1) -> "#{group1}") # remove final decimal place if no numbers trail it
                     )
                 numDigits = Math.max _.pluck(y.ticks(axisY.axis.ticks()).map(y.tickFormat()), "length")...
                 tickWidth = Math.ceil(numDigits * 6.5) #px per digit
@@ -113,7 +114,7 @@ class Chart
         axisX = @axes[0]
         if @type isnt supposedType
             error "Unsupported variable type for X axis", axisX.column
-        axisX.domain = @data.ids.map(@data.accessorFor @data.varX)
+        axisX.domain = @data.subsetIDs.map(@data.accessorFor @data.varX)
 
     renderXaxis: => ## Setup and draw X axis
         axisX = @axes[0]

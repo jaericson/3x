@@ -84,7 +84,7 @@ class Shelf
         
         centerOnTarget = (targetW - projectileW) / 2
         deltaX = projectileOffset.left - (targetOffset.left + centerOnTarget)
-        deltaX -= 3 # -3 to account for left @ -6px in CSS
+        deltaX -= 2 # -2 to account for left @ -6px in CSS
 
         newLeft = (projectileLeft - deltaX) + "px" 
         newTop = (projectileTop - deltaY) + "px"

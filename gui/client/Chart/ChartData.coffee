@@ -1,17 +1,18 @@
 utils = require "utils"
 
 class ChartData
-    constructor: (@_table, @varX, @varsY, @varsPivot, @ids) ->
+    constructor: (@_table, @varX, @varsY, @varsPivot, @subsetIDs) -> #subsetIDs used for only ids associated with a small multiple
         # collect data to plot from @_table
         $trs = @_table.baseElement.find("tbody tr")
-        @ids?= $trs.map((i, tr) -> +tr.dataset.ordinal).get()
+        @subsetIDs?= $trs.map((i, tr) -> +tr.dataset.ordinal).get()
+        @ids= $trs.map((i, tr) -> +tr.dataset.ordinal).get()
 
         # setup accessors
         @_accessorByName = {}
         @_originAccessorByName = {}
 
-        # group @ids by pivot variables into series
-        @idsBySeries = _.groupBy @ids, (rowIdx) =>
+        # group @subsetIDs by pivot variables into series
+        @idsBySeries = _.groupBy @subsetIDs, (rowIdx) =>
             @varsPivot.map((pvVar) => (@accessorFor pvVar)(rowIdx)).join(", ")
 
     accessorFor: (v) =>
