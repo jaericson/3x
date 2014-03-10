@@ -18,6 +18,7 @@ class Chart
         do @createSVG
         do @renderXaxis
         do @renderYaxis
+        do @renderTitle
         do @renderData
         do @updateOptionsFromData
 
@@ -132,7 +133,7 @@ class Chart
             .attr("x", @width/2)
             .attr("dy", "3em")
             .style("text-anchor", "middle")
-            .text(if @properties.showAxisTitles then axisX.label else "")
+            .text(if @properties.isSmallMultiple then "" else axisX.label)
 
     renderYaxis: => ## Setup and draw Y axis
         @axisByUnit = {}
@@ -154,8 +155,19 @@ class Chart
                     },#{@height/2}), rotate(-90)")
                 .attr("dy", if orientation is "left" then "1em" else "-.3em")
                 .style("text-anchor", "middle")
-                .text(if @properties.showAxisTitles then axisY.label else "")
+                .text(if @properties.isSmallMultiple then "" else axisY.label)
             @axisByUnit[axisY.unit] = axisY
+
+    renderTitle: => # Setup individual chart title
+        return if not @properties.isSmallMultiple
+        @svg.append("g")
+            .attr("class", "small-multiple-title")
+           .append("text")
+            .attr("x", @width/2)
+            .attr("y", -@margin.top/2)
+            .style("text-anchor", "middle")
+            .text(Object.keys(@data.idsBySeries)[0])
+
 
     renderData: =>
         # See: https://github.com/mbostock/d3/wiki/Ordinal-Scales#wiki-category10

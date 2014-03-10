@@ -650,13 +650,14 @@ class ChartView extends CompositeElement
         for i in [0..numCharts-1]
             @baseElement.append("<div class='small-multiple' style='float:left'></div>")
 
-        gridN = Math.ceil(Math.sqrt numCharts)
+        # get grid size of small multiples layout
+        [numRows, numColumns] = @getSmallMultiplesDimensions numCharts
 
         @baseElement.css("top", if numCharts is 1 then 0 else 30)
         properties =
-            chartWidth: (window.innerWidth  - @baseElement.offset().left * 2 - 10) / gridN # -10 for buffer room
-            chartHeight: (window.innerHeight - @baseElement.offset().top - 20) / gridN
-            showAxisTitles: numCharts is 1
+            chartWidth: (window.innerWidth  - @baseElement.offset().left * 2 - 10) / numColumns # -10 for buffer room
+            chartHeight: (window.innerHeight - @baseElement.offset().top - 20) / numRows
+            isSmallMultiple: numCharts > 1
 
         # create and render the chart
         # TODO reuse the created chart?
@@ -686,7 +687,10 @@ class ChartView extends CompositeElement
             "opacity": 1
         )
 
-
+    getSmallMultiplesDimensions: (numCharts) ->
+        numColumns = Math.ceil(Math.sqrt numCharts)
+        numRows = Math.ceil(numCharts / numColumns)
+        return [numRows, numColumns]
 
 
     renderTitle: =>
