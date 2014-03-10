@@ -17,3 +17,5 @@ class ChartSection
             alertChartImpossible    : $("#chart-impossible")
             chartTitle              : $("#chart-title")
             chartOptionsContainer   : $("#chart-options-container")
+            fixedXAxisTitle         : $("#fixed-x-axis-title")
+            fixedYAxisTitle         : $("#fixed-y-axis-title")

@@ -87,6 +87,11 @@ overflow: hidden;
   }
 }
 
+div#chart-body {
+  position: relative;
+}
+
+
 #chart-options-dropzones {
   position: relative;
 
@@ -150,5 +155,18 @@ overflow: hidden;
 
 .projectile:hover {
   cursor: move;
+}
+
+#fixed-x-axis-title, #fixed-y-axis-title {
+  position: fixed;
+  opacity: 0;
+}
+
+#fixed-y-axis-title  {
+  -webkit-transform: rotate(-90deg);
+  -moz-transform: rotate(-90deg);
+  -o-transform: rotate(-90deg);
+  -ms-transform: rotate(-90deg);
+  transform: rotate(-90deg);
 }
 

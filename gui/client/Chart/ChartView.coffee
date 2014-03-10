@@ -627,12 +627,9 @@ class ChartView extends CompositeElement
         @smChartData = new ChartData @table, @varX, @varsY, @varsSmult
         idsBySeries = @smChartData.idsBySeries
         chartData = []
-        for seriesName, ids of idsBySeries
+        for seriesName, ids of idsBySeries # if no series, idsBySeries will contain all the indices
             chartData.push(new ChartData @table, @varX, @varsY, @varsSmult, ids)
-        
         numCharts = chartData.length
-
-        # chartData = new ChartData @table, @varX, @varsY, @varsPivot
 
         do @renderTitle
 
@@ -648,21 +645,48 @@ class ChartView extends CompositeElement
                 else
                     throw new Error "#{@chartType}: unknown chart type"
 
+        # insert a new DIV for each small multiple
+        @baseElement.find("div.small-multiple").remove()
         for i in [0..numCharts-1]
             @baseElement.append("<div class='small-multiple' style='float:left'></div>")
 
         gridN = Math.ceil(Math.sqrt numCharts)
 
-        dimensions =
-            chartWidth: (window.innerWidth  - @baseElement.position().left * 2) / gridN
-            chartHeight: (window.innerHeight - @baseElement.position().top - 20) / gridN
+        @baseElement.css("top", if numCharts is 1 then 0 else 30)
+        properties =
+            chartWidth: (window.innerWidth  - @baseElement.offset().left * 2 - 10) / gridN # -10 for buffer room
+            chartHeight: (window.innerHeight - @baseElement.offset().top - 20) / gridN
+            showAxisTitles: numCharts is 1
 
         # create and render the chart
         # TODO reuse the created chart?
+        chart = undefined
         for i in [0..numCharts-1]
-            chart = new chartClass @baseElement.find("div.small-multiple").eq(i), chartData[i], @chartOptions, dimensions,
+            chart = new chartClass @baseElement.find("div.small-multiple").eq(i), chartData[i], @chartOptions, properties,
                 @optionElements # TODO don't pass optionElements, but listen to change events from @chartOptions
             do chart.render
+
+        # update fixed axis titles
+        @optionElements.fixedXAxisTitle.text(if numCharts is 1 then "" else chart.axes[0].label)
+        @optionElements.fixedYAxisTitle.text(if numCharts is 1 then "" else chart.axes[1].label)
+
+        # position fixed axis titles
+        top = @optionElements.chartTitle.offset().top + @optionElements.chartTitle.outerHeight(true)
+        left = (window.innerWidth - @optionElements.fixedXAxisTitle.width()) / 2
+        @optionElements.fixedXAxisTitle.css(
+            "top": top
+            "left": left
+            "opacity": 1
+        )
+        top = top + (window.innerHeight - top) / 2
+        left = 30 - @optionElements.fixedYAxisTitle.width() / 2
+        @optionElements.fixedYAxisTitle.css(
+            "top": top
+            "left": left
+            "opacity": 1
+        )
+
+
 
 
     renderTitle: =>

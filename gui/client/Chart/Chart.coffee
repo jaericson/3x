@@ -10,7 +10,7 @@ _3X_ = require "3x"
 utils = require "utils"
 
 class Chart
-    constructor: (@baseElement, @data, @chartOptions, @dimensions, @optionElements) ->
+    constructor: (@baseElement, @data, @chartOptions, @properties, @optionElements) ->
         @type = null # TODO REFACTORING instead of branching off with @type, override with subclasses
 
     render: =>
@@ -66,8 +66,8 @@ class Chart
             @baseElement.find("style").remove().end().append(@constructor.SVG_STYLE_SHEET)
             # chartWidth  = window.innerWidth  - @baseElement.position().left * 2
             # chartHeight = window.innerHeight - @baseElement.position().top - 20
-            chartWidth = @dimensions.chartWidth
-            chartHeight = @dimensions.chartHeight
+            chartWidth = @properties.chartWidth
+            chartHeight = @properties.chartHeight
             @baseElement.css
                 width:  "#{chartWidth }px"
                 height: "#{chartHeight}px"
@@ -132,7 +132,7 @@ class Chart
             .attr("x", @width/2)
             .attr("dy", "3em")
             .style("text-anchor", "middle")
-            .text(axisX.label)
+            .text(if @properties.showAxisTitles then axisX.label else "")
 
     renderYaxis: => ## Setup and draw Y axis
         @axisByUnit = {}
@@ -143,6 +143,7 @@ class Chart
             # draw axis
             orientation = if i == 0 then "left" else "right"
             axisY.axis.orient(orientation)
+            console.log "Appending #{axisY.label} --> #{i}"
             @svg.append("g")
                 .attr("class", "y axis")
                 .attr("transform", if orientation isnt "left" then "translate(#{@width},0)")
@@ -153,7 +154,7 @@ class Chart
                     },#{@height/2}), rotate(-90)")
                 .attr("dy", if orientation is "left" then "1em" else "-.3em")
                 .style("text-anchor", "middle")
-                .text(axisY.label)
+                .text(if @properties.showAxisTitles then axisY.label else "")
             @axisByUnit[axisY.unit] = axisY
 
     renderData: =>
