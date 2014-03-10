@@ -667,21 +667,25 @@ class ChartView extends CompositeElement
                 @optionElements # TODO don't pass optionElements, but listen to change events from @chartOptions
             do chart.render
 
+        @updateFixedAxisTitles numCharts, chart.axes[0].label, chart.axes[1].label
+
+    updateFixedAxisTitles: (numCharts, xAxisTitle, yAxisTitle) =>
         # update fixed axis titles
-        @optionElements.fixedXAxisTitle.text(if numCharts is 1 then "" else chart.axes[0].label)
-        @optionElements.fixedYAxisTitle.text(if numCharts is 1 then "" else chart.axes[1].label)
+        xAxisTitleDiv = @optionElements.fixedXAxisTitle
+        yAxisTitleDiv = @optionElements.fixedYAxisTitle
+
+        xAxisTitleDiv.text(if numCharts is 1 then "" else xAxisTitle)
+        yAxisTitleDiv.text(if numCharts is 1 then "" else yAxisTitle)
 
         # position fixed axis titles
-        top = @optionElements.chartTitle.offset().top + @optionElements.chartTitle.outerHeight(true)
-        left = (window.innerWidth - @optionElements.fixedXAxisTitle.width()) / 2
-        @optionElements.fixedXAxisTitle.css(
-            "top": top
-            "left": left
+        xAxisTitleDiv.css(
+            "top": window.innerHeight - xAxisTitleDiv.height()
             "opacity": 1
         )
+        top = @optionElements.chartTitle.offset().top + @optionElements.chartTitle.outerHeight(true)
         top = top + (window.innerHeight - top) / 2
-        left = 30 - @optionElements.fixedYAxisTitle.width() / 2
-        @optionElements.fixedYAxisTitle.css(
+        left = 30 - yAxisTitleDiv.width() / 2
+        yAxisTitleDiv.css(
             "top": top
             "left": left
             "opacity": 1

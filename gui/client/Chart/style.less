@@ -87,11 +87,6 @@ overflow: hidden;
   }
 }
 
-div#chart-body {
-  position: relative;
-}
-
-
 #chart-options-dropzones {
   position: relative;
 
@@ -134,7 +129,6 @@ div#chart-body {
   }
 }
 
-
 .projectile {
   float: left;
   /*width: 50px;*/
@@ -157,9 +151,24 @@ div#chart-body {
   cursor: move;
 }
 
+div#chart-body {
+  position: relative;
+}
+
+div.small-multiple:last-child {
+  margin-bottom: 50px;
+}
+
 #fixed-x-axis-title, #fixed-y-axis-title {
   position: fixed;
   opacity: 0;
+}
+
+#fixed-x-axis-title {
+  width: 100%;
+  height: 30px;
+  text-align: center;
+  background-color: white;
 }
 
 #fixed-y-axis-title  {
