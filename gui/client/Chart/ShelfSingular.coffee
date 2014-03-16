@@ -24,13 +24,20 @@ class ShelfSingular extends Shelf
     getNames: =>
         return [@axisName]
 
-    getVariablesHelper: (table) =>
-        return ([@axisName].map (name) => table.columns[name])[0]
+    getTableDataHelper: (table, axisCandidates) =>
+        data = ([@axisName].map (name) => table.columns[name])[0]
+        if not data?
+            @axisName = ""
+        else
+            isValid = axisCandidates.some (col) => col.name is data.name
+            if not isValid
+                data = undefined
+                @axisName = "" 
+        return data
 
     remove: (projectile) =>
         target = $(".#{@dropzoneClass}").eq(@dropzoneIndex)
         target.removeClass("droppable-not-empty")
-
         @axisName = ""
 
     expand: () =>

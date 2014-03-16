@@ -5,7 +5,7 @@ class ChartData
         # collect data to plot from @_table
         $trs = @_table.baseElement.find("tbody tr")
         @subsetIDs?= $trs.map((i, tr) -> +tr.dataset.ordinal).get()
-        @ids= $trs.map((i, tr) -> +tr.dataset.ordinal).get()
+        @ids = $trs.map((i, tr) -> +tr.dataset.ordinal).get()
 
         # setup accessors
         @_accessorByName = {}

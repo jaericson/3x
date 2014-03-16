@@ -279,10 +279,12 @@ class ChartView extends CompositeElement
         cachedY = try JSON.parse localStorage["shelfY"]
         cachedY?= [ratioVariables[0]?.name ? ratioVariables[0]?.name]
         cachedPivot = try JSON.parse localStorage["shelfPivot"]
-        cachedPivot?= [nominalVariables[1]?.name ? nominalVariables[1]?.name]
-        # cachedSmult = try JSON.parse localStorage["shelfSmult"]
+        cachedPivot?= []
+        # cachedPivot?= [nominalVariables[1]?.name ? nominalVariables[1]?.name]
+        cachedSmult = try JSON.parse localStorage["shelfSmult"]
+        cachedSmult?= []
         # cachedSmult?= [nominalVariables[2]?.name ? nominalVariables[2]?.name]
-        cachedSmult = ["inputType"]
+        # cachedSmult = ["inputType"]
 
         @shelves?=
             "Y": new ShelfOneUnit cachedY, 0
@@ -290,17 +292,10 @@ class ChartView extends CompositeElement
             "PIVOT": new ShelfMultiple cachedPivot, 2
             "SMULT": new ShelfMultiple cachedSmult, 3
 
-        # @vars = @shelves.map (name) => @table.columns[name]
-
-        # @varX = ([@shelves.X].map (name) => @table.columns[name])[0]
-        # @varsY = @shelves.Y.map (name) => @table.columns[name]
-        # @varsPivot = @shelves.PIVOT.map (name) => @table.columns[name]
-        # @varsSmult = @shelves.SMULT.map (name) => @table.columns[name]
-
-        @varX = @shelves.X.getVariables(@table)
-        @varsY = @shelves.Y.getVariables(@table)
-        @varsPivot = @shelves.PIVOT.getVariables(@table)
-        @varsSmult = @shelves.SMULT.getVariables(@table)
+        @varX = @shelves.X.getTableData @table, axisCandidates
+        @varsY = @shelves.Y.getTableData @table, axisCandidates
+        @varsPivot = @shelves.PIVOT.getTableData @table, axisCandidates
+        @varsSmult = @shelves.SMULT.getTableData @table, axisCandidates
 
         # standardize no-units so that "undefined", "null", and an empty string all have null unit
         # TODO: don't set units to null in 2 different places
@@ -415,12 +410,12 @@ class ChartView extends CompositeElement
         targetNames = ["Y", "X", "Pivot", "Small Mult"]
         targetNames = _.map(targetNames, (x) -> x + "=")
 
-        targetVariables = []
+        targetTableData = []
         for name in targetNames
-            targetVariables.push(
+            targetTableData.push(
                 name: name
                 width: maxWidth
-                ord: targetVariables.length
+                ord: targetTableData.length
             )
 
         if @optionElements.chartOptionsContainer.find("div.dropzone").length is 0
@@ -429,7 +424,7 @@ class ChartView extends CompositeElement
                 # .remove()
                 # .end()
                 .append(@constructor.TARGET_OPTION.render(
-                    variables: targetVariables
+                    variables: targetTableData
                 )) if remainingVariables.length > 0
 
         strictAcceptingClasses =
@@ -656,7 +651,7 @@ class ChartView extends CompositeElement
         @baseElement.css("top", if numCharts is 1 then 0 else 30)
         properties =
             chartWidth: (window.innerWidth  - @baseElement.offset().left * 2 - 10) / numColumns # -10 for buffer room
-            chartHeight: (window.innerHeight - @baseElement.offset().top - 20) / numRows
+            chartHeight: (window.innerHeight - @baseElement.offset().top - 30) / numRows # 30 px is height of fixed x-axis title
             isSmallMultiple: numCharts > 1
 
         # create and render the chart

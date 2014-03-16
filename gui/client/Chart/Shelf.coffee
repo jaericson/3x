@@ -31,15 +31,19 @@ class Shelf
     getNames: =>
         return @axisNames
 
-    getVariables: (table) =>
-        vars = @getVariablesHelper table
+    getTableData: (table, axisCandidates) =>
+        # data for the specified axis names must be in the table and a valid axis candidate
+        data = @getTableDataHelper table, axisCandidates
         # standardize no-units so that "undefined", "null", and an empty string all have empty string
-        if vars?
-            vars[ord].unit = "" for ax,ord in vars when vars[ord]? and (not ax.unit? or not ax.unit.length? or ax.unit.length is 0)
-        return vars
+        if data? then data[ord].unit = "" for ax,ord in data when data[ord]? and (not ax.unit? or not ax.unit.length? or ax.unit.length is 0)
+        return data
 
-    getVariablesHelper: (table) =>
-        return @axisNames.map (name) => table.columns[name]
+    getTableDataHelper: (table, axisCandidates) =>
+        data = @axisNames.map (name) => table.columns[name]
+        data = data.filter (v) => v? # filter out any axisNames that the table cannot find
+        data = data.filter (d) => axisCandidates.some (col) => col.name is d.name # filter out if not an axis candidate
+        @axisNames = _.pluck(data, "name") # reset axisNames to only valid names
+        return data
 
     strictlyAccept: (className) =>
         @strictAcceptance = className
