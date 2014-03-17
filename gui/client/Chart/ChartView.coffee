@@ -463,6 +463,7 @@ class ChartView extends CompositeElement
                     ord = +target.attr("data-order")
                     shelf = @shelves[@constructor.ORD_TO_AXIS_SHELF[ord]]
                     shelf.remove projectile
+                    shelf.expand projectile
 
                     # @shelves[ord] = null
                     # TODO: allow multiples per shelf

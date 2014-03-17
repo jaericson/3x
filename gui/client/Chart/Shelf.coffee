@@ -114,10 +114,10 @@ class Shelf
 
     # used to temporarily expand when you're dragging an acceptable projectile
     expand: (projectile) =>
-        # only expand if has loose accepting class
+        # only expand if projectile isn't in this shelf's names AND has loose accepting class
         if not @looseAcceptance? or projectile.hasClass(@looseAcceptance)
             # only need to expand shelf if doesn't have this projectile
-            # if @getNames().indexOf(projectile.attr("data-name")) is -1
+            if @getNames().indexOf(projectile.attr("data-name")) is -1
                 @adjustHeight true
 
     # used to shrink back to fitted height after you're done dragging an acceptable projectile
