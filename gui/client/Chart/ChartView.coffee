@@ -541,7 +541,7 @@ class ChartView extends CompositeElement
             if varNames.length > 0
                 for vName, vIndex in varNames
                     if seriesToColor[vName]?
-                        varNames[vIndex] = "<span style='color:#{seriesToColor[vName]}'>#{vName}</span>"
+                        varNames[vIndex] = "<span style='color:#{seriesToColor[vName]}'>&#9679; #{vName}</span>"
                 textArray.push "#{@constructor.ORD_TO_AXIS_NAME[index]} = #{varNames.join(", ")}"
         @optionElements.chartOptionsPlainText.prepend("#{span} #{textArray.join(", ")} </span>")
 
