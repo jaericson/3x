@@ -14,7 +14,6 @@ _3X_ = require "3x"
 utils = require "utils"
 
 CompositeElement = require "CompositeElement"
-
 ChartData = require "ChartData"
 Chart = require "Chart"
 BarChart = require "BarChart"
@@ -38,6 +37,7 @@ class ChartView extends CompositeElement
 
         @optionElements.chartOptionsPlainText.find("#change-settings-button").on("click", (e) =>
             @showInteractiveMode true
+            do @initializeAxes true
         )
 
         # if user resizes window, call display at most once every 100 ms
@@ -100,7 +100,7 @@ class ChartView extends CompositeElement
             @showProjectiles left, top, target.parents(".btn-group").next(".dropzone").outerHeight()
         )
 
-        @optionElements.chartOptionsContainer.on("click", "i.icon-remove", (e) => do @hideProjectiles)
+        @optionElements.chartOptionsContainer.find("#chart-options-projectile-dismissal").on("click", (e) => do @hideProjectiles)
 
     @AXIS_NAMES: "X Y".trim().split(/\s+/)
 
@@ -202,7 +202,7 @@ class ChartView extends CompositeElement
         @chartType = name.trim()
         @chartOptions.justChanged = "chartType"
         do @persist
-        do @initializeAxes
+        do @initializeAxes true
 
     actionHandlerForAxisControl: (action) => (e) =>
         e.preventDefault()
@@ -211,23 +211,6 @@ class ChartView extends CompositeElement
         ord = +$axisControl.attr("data-order")
         name = $this.closest(".axis-var").attr("data-name")
         action ord, name, $axisControl, $this, e
-    # handleAxisChange: (ord, name, $axisControl) =>
-    #     $axisControl.find(".axis-name").text(name)
-    #     @shelves[ord] = name
-    #     if ord is @constructor.X_AXIS_ORDINAL then @chartOptions.justChanged = "x-axis"
-    #     # TODO proceed only when something actually changes
-    #     do @persist
-    #     do @initializeAxes
-    # handleAxisAddition: (ord, name, $axisControl) =>
-    #     # @shelves.push name
-    #     @shelves[ord] = name
-    #     do @persist
-    #     do @initializeAxes
-    # handleAxisRemoval: (ord, name, $axisControl) =>
-    #     # @shelves.splice ord, 1
-    #     @shelves[ord] = undefined
-    #     do @persist
-    #     do @initializeAxes
 
     @Y_AXIS_ORDINAL: 0 # first variable is Y
     @X_AXIS_ORDINAL: 1 # second variable is X
@@ -237,7 +220,7 @@ class ChartView extends CompositeElement
     @ORD_TO_AXIS_NAME: ["Y", "X", "Pivot", "Small Multiple"]
     
     # initialize @axes from @shelves (which is saved in local storage)
-    initializeAxes: => 
+    initializeAxes: (redrawProjectiles) => 
         if @table.deferredDisplay?
             do @table.render # XXX charting heavily depends on the rendered table, so force rendering
         return unless @table.columnsRendered?.length
@@ -262,21 +245,6 @@ class ChartView extends CompositeElement
         else
             canDrawChart no
             return
-        # validate the variables chosen for axes
-        # defaultAxes = []
-        # defaultAxes[@constructor.X_AXIS_ORDINAL] = nominalVariables[0]?.name ? ratioVariables[1]?.name
-        # defaultAxes[@constructor.Y_AXIS_ORDINAL] = ratioVariables[0]?.name
-        # if @shelves?
-        #     # find if all shelves are valid, don't appear more than once, or make them default
-        #     for name,ord in @shelves when (@shelves.indexOf(name) isnt ord or not axisCandidates.some (col) => col.name is name)
-        #         # @shelves[ord] = defaultAxes[ord] ? null
-        #         @shelves[ord] = null
-        #     # discard any null/undefined elements
-        #     # @shelves = @shelves.filter (name) => name?
-        # else
-        #     # default axes when shelves are not in local storage
-        #     @shelves = defaultAxes
-        # collect ResultsTable columns that corresponds to the @shelves
 
         cachedX = try JSON.parse localStorage["shelfX"]
         cachedX?= [nominalVariables[0]?.name ? ratioVariables[1]?.name]
@@ -284,11 +252,8 @@ class ChartView extends CompositeElement
         cachedY?= [ratioVariables[0]?.name ? ratioVariables[0]?.name]
         cachedPivot = try JSON.parse localStorage["shelfPivot"]
         cachedPivot?= []
-        # cachedPivot?= [nominalVariables[1]?.name ? nominalVariables[1]?.name]
         cachedSmult = try JSON.parse localStorage["shelfSmult"]
         cachedSmult?= []
-        # cachedSmult?= [nominalVariables[2]?.name ? nominalVariables[2]?.name]
-        # cachedSmult = ["inputType"]
 
         @shelves?=
             "Y": new ShelfOneUnit cachedY, 0, true
@@ -301,20 +266,6 @@ class ChartView extends CompositeElement
         @varsPivot = @shelves.PIVOT.getTableData @table, axisCandidates
         @varsSmult = @shelves.SMULT.getTableData @table, axisCandidates
 
-        # standardize no-units so that "undefined", "null", and an empty string all have null unit
-        # TODO: don't set units to null in 2 different places
-            # @vars[ord].unit = null for ax,ord in @vars when @vars[ord]? and (not ax.unit? or not ax.unit.length? or ax.unit.length is 0)
-            # @varX      = @vars[@constructor.X_AXIS_ORDINAL]
-        # pivot variables in an array if there are additional nominal variables
-            # @varsPivot = @vars[@constructor.PIVOT_AXIS]
-            # if @varsPivot? then @varsPivot = [@varsPivot] else @varsPivot = []
-        # @varsPivot = (ax for ax,ord in @vars when ord isnt @constructor.X_AXIS_ORDINAL and utils.isNominal ax.type)
-        # y-axis variables in an array
-        # TODO: there should only be 1 y-axis variable for now
-            # @varsY     = @vars[@constructor.Y_AXIS_ORDINAL]
-            # if @varsY? then @varsY = [@varsY] else @varsY = []
-        # @varsY     = (ax for ax,ord in @vars when ord isnt @constructor.X_AXIS_ORDINAL and utils.isRatio   ax.type)
-        # establish which chart type we're using
         chartTypes = "Line Bar".trim().split(/\s+/)
         noSpecifiedChartType = not @chartType?
         # specify which chart types are allowed
@@ -345,14 +296,6 @@ class ChartView extends CompositeElement
             for ax,ord in @varsY
                 u = ax.unit
                 (@varsYbyUnit[u] ?= []).push ax
-                # remove Y axis variable if it uses a second unit
-                # with drag-and-drop, this should never happen
-                # if (_.size @varsYbyUnit) > 1
-                #     delete @varsYbyUnit[u]
-                #     @varsY[ord] = null
-                #     ord2 = @vars.indexOf ax
-                #     @vars.splice ord2, 1
-                #     @shelves.splice ord2, 1
             @varsY = @varsY.filter (v) => v?
         # TODO validation of each axis type with the chart type
         # find out remaining variables: all the axis candidates that haven't been used as in @shelves yet
@@ -369,24 +312,30 @@ class ChartView extends CompositeElement
             .append(@constructor.CHART_PICK_CONTROL_SKELETON.render(
                 names: chartTypes
             ))
-
         
-        @renderTargetsAndProjectiles axisCandidates, remainingVariables
+        if redrawProjectiles then @renderTargetsAndProjectiles axisCandidates, remainingVariables
         do @display
 
-    renderTargetsAndProjectiles: (axisCandidates, remainingVariables) =>
+    renderTargetsAndProjectiles: (axisCandidates, remainingVariables, redrawProjectiles) =>
         # need to show this container to read DOM object dimensions
         @optionElements.chartOptionsContainer.show()
 
         # add in projectile options and make them draggable
         for v in axisCandidates #remainingVariables
             v.isRatio = utils.isRatio v.type
-        if @optionElements.chartOptionsContainer.find("div.projectile").length is 0
-            @optionElements.chartOptionsContainer
-                .find("#chart-options-projectiles")
-                .append(@constructor.PROJECTILE_OPTION.render(
-                    variables: axisCandidates #remainingVariables
-                )) if axisCandidates.length > 0 #remainingVariables.length > 0
+        # if @optionElements.chartOptionsContainer.find("div.projectile").length is 0
+        #     @optionElements.chartOptionsContainer
+        #         .find("#chart-options-projectiles")
+        #         .append(@constructor.PROJECTILE_OPTION.render(
+        #             variables: axisCandidates #remainingVariables
+        #         )) if axisCandidates.length > 0 #remainingVariables.length > 0
+        @optionElements.chartOptionsContainer.find("#chart-options-projectiles").children().remove()
+        @optionElements.chartOptionsContainer.find("#chart-options-projectiles")
+            .append(@constructor.PROJECTILE_OPTION.render(
+                variables: axisCandidates #remainingVariables
+            )) if axisCandidates.length > 0 #remainingVariables.length > 0
+
+
         $(".projectile").draggable({
             start: (e) => 
                 projectile = $(e.target)
@@ -425,11 +374,19 @@ class ChartView extends CompositeElement
                 ord: targetTableData.length
             )
 
-        if @optionElements.chartOptionsContainer.find("div.dropzone").length is 0
-            @optionElements.chartOptionsContainer
-                .find("#chart-options-dropzones")
+        # if @optionElements.chartOptionsContainer.find("div.dropzone").length is 0
+        #     @optionElements.chartOptionsContainer
+        #         .find("#chart-options-dropzones")
+        #         # .remove()
+        #         # .end()
+        #         .append(@constructor.TARGET_OPTION.render(
+        #             variables: targetTableData
+        #         )) if remainingVariables.length > 0
+
+        @optionElements.chartOptionsContainer.find("#chart-options-dropzones").children().remove()
                 # .remove()
                 # .end()
+        @optionElements.chartOptionsContainer.find("#chart-options-dropzones")
                 .append(@constructor.TARGET_OPTION.render(
                     variables: targetTableData
                 )) if remainingVariables.length > 0
@@ -463,7 +420,7 @@ class ChartView extends CompositeElement
                 @dropOnDropZone target, projectile, false
                 do @hideProjectiles # hide first, so any old projectiles will also hide
                 do @persist
-                do @initializeAxes
+                do @initializeAxes false
             out: (e, ui) =>
                 projectile = $(ui.draggable)
                 # removing projectile from a target
@@ -474,17 +431,8 @@ class ChartView extends CompositeElement
                     shelf = @shelves[@constructor.ORD_TO_AXIS_SHELF[ord]]
                     shelf.remove projectile
                     shelf.expand projectile
-
-                    # @shelves[ord] = null
-                    # TODO: allow multiples per shelf
-                    # if ord == @constructor.X_AXIS_ORDINAL
-                    #     @shelves[@constructor.ORD_TO_AXIS_SHELF[ord]] = ""
-                    # else
-                    #     index = @shelves[@constructor.ORD_TO_AXIS_SHELF[ord]].indexOf(projectile.name)
-                    #     @shelves[@constructor.ORD_TO_AXIS_SHELF[ord]].splice index, 1
-                    
                     do @persist
-                    do @initializeAxes
+                    do @initializeAxes false
         })
 
         # place vars in their correct spots

@@ -48,7 +48,7 @@ overflow: hidden;
 #chart-options-projectile-container, #chart-options-background-container {
   position: absolute;
   /*height: 200px;*/
-  width: 500px;
+  /*width: 500px;*/
   left: -600px;
   /*top: 145\px;*/
   top: 100px;
@@ -77,14 +77,15 @@ overflow: hidden;
   position: relative;
   float: left;
   opacity: 0.0;
+  z-index: 100;
 
   i {
     padding: 4px;
   }
+}
 
-  i:hover {
-    cursor: pointer;
-  }
+#chart-options-projectile-dismissal:hover {
+  cursor: pointer;
 }
 
 #chart-options-dropzones {

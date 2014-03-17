@@ -21,7 +21,8 @@ class ShelfSingular extends Shelf
         if nameToRemove isnt @axisNames[0] and nameToRemove? then [nameToRemove] else null
 
     getNames: =>
-        return if @axisNames.length is 0 then [undefined] else @axisNames[..] # copy of
+        # return if @axisNames.length is 0 then [undefined] else @axisNames[..] # copy of
+        return @axisNames[..]
 
     getTableDataHelper: (table, axisCandidates) =>
         data = (@axisNames.map (name) => table.columns[name])[0]
