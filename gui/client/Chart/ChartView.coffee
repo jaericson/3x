@@ -480,16 +480,38 @@ class ChartView extends CompositeElement
 
     updateChartOptionsPlainText: =>
         seriesToColor = if @chart? then @chart.seriesToColor else {}
+        seriesToShape = if @chart? then @chart.seriesToShape else {}
         @optionElements.chartOptionsPlainText.find("span").remove()
         span = "<span>#{@chartType}: "
         textArray = []
+
+        shapesToUnicode = 
+            "circle": "&#9679;"
+            "cross": "&#43;"
+            "diamond": "&#9830;"
+            "square": "&#9632;"
+            "triangle-down": "&#9660;"
+            "triangle-up": "&#9650;"
 
         for shelfKey, index in @constructor.ORD_TO_AXIS_SHELF
             varNames = do @shelves[shelfKey].getNames
             if varNames.length > 0
                 for vName, vIndex in varNames
-                    if seriesToColor[vName]?
-                        varNames[vIndex] = "<span style='color:#{seriesToColor[vName]}'>&#9679; #{vName}</span>"
+                    shapeColor = if seriesToColor[vName]? then seriesToColor[vName] else "black"
+                    textColor = if seriesToColor[vName]? then seriesToColor[vName] else "#777"
+                    shape = shapesToUnicode[seriesToShape[vName]]?= ""
+                    if shelfKey is "PIVOT"
+                        shapeVars = Object.keys(seriesToShape)
+                        colorVars = Object.keys(seriesToColor)
+                        varNames[vIndex] = ""
+                        for shapeVar in shapeVars
+                            for colorVar in colorVars
+                                shape = shapesToUnicode[seriesToShape[shapeVar]]
+                                color = seriesToColor[colorVar]
+                                varNames[vIndex] += "<span style='color:#{color}'>#{shape}</span>"
+                        varNames[vIndex] += "<span> #{vName}</span>"
+                    else
+                        varNames[vIndex] = "<span style='color:#{shapeColor}'>#{shape}</span><span style='color:#{textColor}'> #{vName}</span>"
                 textArray.push "#{@constructor.ORD_TO_AXIS_NAME[index]} = #{varNames.join(", ")}"
         @optionElements.chartOptionsPlainText.prepend("#{span} #{textArray.join(", ")} </span>")
 

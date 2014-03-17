@@ -24,16 +24,30 @@ class ScatterPlot extends Chart
         axisX.coord = (d) -> x(xData(d))
         super
 
-    renderDataShapes: (series, seriesLabel, seriesDataIds, seriesColor, yCoord, yVar, xMap) =>
+    renderDataShapes: (series, seriesLabel, seriesDataIds, seriesColor, yCoord, yVar, xMap, seriesShape) =>
         axisX = @axes[0]
         xCoord = axisX.coord
+        # @svg.selectAll(".dot.series-#{series}")
+        #     .data(seriesDataIds)
+        #   .enter().append("circle")
+        #     .attr("class", "dot series-#{series}")
+        #     .attr("r", 5)
+        #     .attr("cx", xCoord)
+        #     .attr("cy", yCoord)
+        #     .style("fill", seriesColor)
+        #     # popover
+        #     .attr("title",        seriesLabel)
+        #     .attr("data-content", @formatDataPoint yVar)
+        #     .attr("data-placement", (d) =>
+        #         if xCoord(d) < @width/2 then "right" else "left"
+        #     )
+
         @svg.selectAll(".dot.series-#{series}")
             .data(seriesDataIds)
-          .enter().append("circle")
+          .enter().append("path")
             .attr("class", "dot series-#{series}")
-            .attr("r", 5)
-            .attr("cx", xCoord)
-            .attr("cy", yCoord)
+            .attr("d", d3.svg.symbol().type(seriesShape))
+            .attr("transform", (d) => "translate(" + xCoord(d) + "," + yCoord(d) + ")")
             .style("fill", seriesColor)
             # popover
             .attr("title",        seriesLabel)

@@ -173,18 +173,33 @@ class Chart
         #TODO @decideColors
         color = d3.scale.category10()
         @seriesToColor = {}
+        @seriesToShape = {}
 
         ## Finally, draw each varY and series
         series = 0
+        shapeSeries = 0
+        colorSeries = 0
+        seriesShapes = ["circle", "cross", "diamond", "square", "triangle-down", "triangle-up"]
+        numColorSeries = Object.keys(@data.idsBySeries).length
+
         axisX = @axes[0]
         xCoord = axisX.coord
         for yVar in @data.varsY
             axisY = @axisByUnit[yVar.unit]
             yData = @data.accessorFor yVar
             yCoord = (d) -> axisY.scale(yData(d))
+            if numColorSeries > 1
+                colorSeries = 0 # reset to 0 if cycling through colors
+            seriesShape = seriesShapes[shapeSeries++]
+            @seriesToShape[yVar.name] = seriesShape
 
             for seriesLabel,seriesDataIds of @data.idsBySeries
-                seriesColor = (d) -> color(series)
+                seriesColor = (d) -> color(colorSeries)
+
+                if numColorSeries is 1
+                    @seriesToColor[yVar.name] = color(colorSeries)
+                else
+                    @seriesToColor[seriesLabel] = color(colorSeries)
 
                 # Splits bars if same x-value within a series; that's why it maintains a count and index
                 xMap = {}
@@ -197,7 +212,7 @@ class Chart
                             count: 1
                             index: 0
 
-                @renderDataShapes series, seriesLabel, seriesDataIds, seriesColor, yCoord, yVar, xMap
+                @renderDataShapes series, seriesLabel, seriesDataIds, seriesColor, yCoord, yVar, xMap, seriesShape
 
                 if _.size(@data.varsY) > 1
                     if seriesLabel
@@ -212,7 +227,6 @@ class Chart
 
                 # legend
                 if seriesLabel?
-                    @seriesToColor[seriesLabel] = color(series)
                     i = seriesDataIds.length - 1
                     #i = Math.round(Math.random() * i) # TODO find a better way to place labels
                     d = seriesDataIds[i]
@@ -227,6 +241,7 @@ class Chart
                         .style("fill", seriesColor)
                         .text(seriesLabel)
 
+                colorSeries++
                 series++
 
         # popover
