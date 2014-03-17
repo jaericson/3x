@@ -287,10 +287,10 @@ class ChartView extends CompositeElement
         # cachedSmult = ["inputType"]
 
         @shelves?=
-            "Y": new ShelfOneUnit cachedY, 0
-            "X": new ShelfSingular cachedX, 1
-            "PIVOT": new ShelfMultiple cachedPivot, 2
-            "SMULT": new ShelfMultiple cachedSmult, 3
+            "Y": new ShelfOneUnit cachedY, 0, true
+            "X": new ShelfSingular cachedX, 1, true
+            "PIVOT": new ShelfMultiple cachedPivot, 2, false
+            "SMULT": new ShelfMultiple cachedSmult, 3, false
 
         @varX = @shelves.X.getTableData @table, axisCandidates
         @varsY = @shelves.Y.getTableData @table, axisCandidates
@@ -426,6 +426,9 @@ class ChartView extends CompositeElement
                 .append(@constructor.TARGET_OPTION.render(
                     variables: targetTableData
                 )) if remainingVariables.length > 0
+
+        for shelfKey, shelf of @shelves
+            do shelf.wasCreated
 
         strictAcceptingClasses =
             "Y": "ratioVariable"
@@ -671,6 +674,7 @@ class ChartView extends CompositeElement
         yAxisTitleDiv = @optionElements.fixedYAxisTitle
 
         xAxisTitleDiv.text(if numCharts is 1 then "" else xAxisTitle)
+        xAxisTitleDiv.css("height", if numCharts is 1 then "0px" else "30px") 
         yAxisTitleDiv.text(if numCharts is 1 then "" else yAxisTitle)
 
         # position fixed axis titles

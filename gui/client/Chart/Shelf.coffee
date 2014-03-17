@@ -12,7 +12,7 @@ utils = require "utils"
 #TODO: hold onto the shelf instead of using a jQuery call to access it every time we need it?
 
 class Shelf
-    constructor: (@axisNames, @dropzoneIndex) ->
+    constructor: (@axisNames, @dropzoneIndex, @isEssential) ->
         # Sets above parameters
         @strictAcceptance = null
         @looseAcceptance = null
@@ -45,13 +45,16 @@ class Shelf
         @axisNames = _.pluck(data, "name") # reset axisNames to only valid names
         return data
 
+    wasCreated: =>
+        @target = $(".#{@dropzoneClass}").eq(@dropzoneIndex)
+        if @isEssential and @axisNames.length is 0 then @target.addClass("droppable-empty")
+
     strictlyAccept: (className) =>
         @strictAcceptance = className
         acceptingClass = ".projectile"
         acceptingClass += if @strictAcceptance? then ".#{@strictAcceptance}" else ""
 
-        target = $(".#{@dropzoneClass}").eq(@dropzoneIndex)
-        target.droppable({
+        @target.droppable({
             accept: acceptingClass
         })
 
@@ -59,10 +62,10 @@ class Shelf
         @looseAcceptance = className
 
     add: (projectile, isDefaultNotDropped, animationTime) =>
-        # increase height of target to accomodate more variables
-        target = $(".#{@dropzoneClass}").eq(@dropzoneIndex)
-        target.css("height", @baseHeightPerProjectile + @heightPerProjectile * (@axisNames.length - 1))
-        target.addClass("droppable-not-empty")
+        # increase height of @target to accomodate more variables
+        if @isEssential then @target.removeClass("droppable-empty")
+        @target.css("height", @baseHeightPerProjectile + @heightPerProjectile * (@axisNames.length - 1))
+        @target.addClass("droppable-not-empty")
 
         projectile.addClass("isOnTarget")
         name = projectile.text().trim()
@@ -71,9 +74,9 @@ class Shelf
         if index is -1
             error "Can't find projectile name: #{name} as a shelf name" 
         
-        targetOffset     = target.offset()
-        targetW          = target.outerWidth()
-        targetH          = target.outerHeight()
+        @targetOffset     = @target.offset()
+        @targetW          = @target.outerWidth()
+        @targetH          = @target.outerHeight()
         
         projectileOffset = projectile.offset()
         projectileW      = projectile.outerWidth()
@@ -84,10 +87,10 @@ class Shelf
 
         centerOnTarget = @topPaddingPlusMargin / 2
         slotDownward = @heightPerProjectile * index
-        deltaY = projectileOffset.top - slotDownward - (targetOffset.top + centerOnTarget)
+        deltaY = projectileOffset.top - slotDownward - (@targetOffset.top + centerOnTarget)
         
-        centerOnTarget = (targetW - projectileW) / 2
-        deltaX = projectileOffset.left - (targetOffset.left + centerOnTarget)
+        centerOnTarget = (@targetW - projectileW) / 2
+        deltaX = projectileOffset.left - (@targetOffset.left + centerOnTarget)
         deltaX -= 2 # -2 to account for left @ -6px in CSS
 
         newLeft = (projectileLeft - deltaX) + "px" 
@@ -129,11 +132,9 @@ class Shelf
                 @adjustHeight false
 
     adjustHeight: (shouldExpand) =>
-        target = $(".#{@dropzoneClass}").eq(@dropzoneIndex)
-
         inflated = if shouldExpand then 1 else 0
         numNames = _.max([@axisNames.length - 1 + inflated, 0])
-        target.css("height", @baseHeightPerProjectile + @heightPerProjectile * numNames)
+        @target.css("height", @baseHeightPerProjectile + @heightPerProjectile * numNames)
 
         scale = if shouldExpand then 1 else -1
 
@@ -144,8 +145,6 @@ class Shelf
             proj.css("top", top + scale * @heightPerProjectile)
 
     remove: (projectile) =>
-        target = $(".#{@dropzoneClass}").eq(@dropzoneIndex)
-
         index = @axisNames.indexOf(projectile.attr("data-name"))
         @axisNames.splice index, 1
 
@@ -158,11 +157,11 @@ class Shelf
                 proj.css("top", top - @heightPerProjectile)
 
         # if shelf empty, then remove not-empty class
-        if @axisNames.length == 0
-            target.removeClass("droppable-not-empty")
+        if @axisNames.length is 0
+            @target.removeClass("droppable-not-empty")
+            if @isEssential then @target.addClass("droppable-empty")
         else
-            target.css("height", @baseHeightPerProjectile + @heightPerProjectile * (@axisNames.length - 1))
-
+            @target.css("height", @baseHeightPerProjectile + @heightPerProjectile * (@axisNames.length - 1))
 
 
 

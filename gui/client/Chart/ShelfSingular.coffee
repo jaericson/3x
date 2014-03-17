@@ -13,32 +13,31 @@ Shelf = require "Shelf"
 class ShelfSingular extends Shelf
     constructor: (args...) ->
         super args...
-        @axisName = @axisNames[0]
 
     addName: (projectile) =>
         axisName = projectile.text().trim()
-        nameToRemove = @axisName
-        @axisName = axisName
-        if nameToRemove isnt @axisName then [nameToRemove] else null
+        nameToRemove = if @axisNames[0]? then @axisNames[0] else null
+        @axisNames[0] = axisName
+        if nameToRemove isnt @axisNames[0] and nameToRemove? then [nameToRemove] else null
 
     getNames: =>
-        return [@axisName]
+        return if @axisNames.length is 0 then [undefined] else @axisNames
 
     getTableDataHelper: (table, axisCandidates) =>
-        data = ([@axisName].map (name) => table.columns[name])[0]
+        data = (@axisNames.map (name) => table.columns[name])[0]
         if not data?
-            @axisName = ""
+            @axisNames = []
         else
             isValid = axisCandidates.some (col) => col.name is data.name
             if not isValid
                 data = undefined
-                @axisName = "" 
+                @axisNames = []
         return data
 
-    remove: (projectile) =>
-        target = $(".#{@dropzoneClass}").eq(@dropzoneIndex)
-        target.removeClass("droppable-not-empty")
-        @axisName = ""
+    remove: (projectile) => 
+        @target.removeClass("droppable-not-empty")
+        if @isEssential then @target.addClass("droppable-empty")
+        @axisNames = []
 
     expand: () =>
         # Not allowed to expand
