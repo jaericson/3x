@@ -510,7 +510,7 @@ class ChartView extends CompositeElement
                                 shape = shapesToUnicode[seriesToShape[shapeVar]]
                                 color = seriesToColor[colorVar]
                                 varNames[vIndex] += "<span style='color:#{color}'>#{shape}</span>"
-                                legendContent += "<span style='color:#{color}'>#{shape} #{shapeVar} (#{colorVar})</span><br/>"
+                                legendContent += "<span style='color:#{color}'>#{shape} #{colorVar} (#{shapeVar})</span><br/>"
                         varNames[vIndex] += "<span> #{vName}</span><span>"
                     else
                         varNames[vIndex] = "<span style='color:#{shapeColor}'>#{shape}</span><span style='color:#{textColor}'> #{vName}</span>"
