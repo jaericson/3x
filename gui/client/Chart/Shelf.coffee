@@ -29,7 +29,7 @@ class Shelf
         return null
 
     getNames: =>
-        return @axisNames
+        return @axisNames[..] # copy of
 
     getTableData: (table, axisCandidates) =>
         # data for the specified axis names must be in the table and a valid axis candidate

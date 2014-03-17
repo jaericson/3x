@@ -172,6 +172,7 @@ class Chart
         # See: https://github.com/mbostock/d3/wiki/Ordinal-Scales#wiki-category10
         #TODO @decideColors
         color = d3.scale.category10()
+        @seriesToColor = {}
 
         ## Finally, draw each varY and series
         series = 0
@@ -211,6 +212,7 @@ class Chart
 
                 # legend
                 if seriesLabel?
+                    @seriesToColor[seriesLabel] = color(series)
                     i = seriesDataIds.length - 1
                     #i = Math.round(Math.random() * i) # TODO find a better way to place labels
                     d = seriesDataIds[i]

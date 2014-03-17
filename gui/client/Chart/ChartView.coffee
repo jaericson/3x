@@ -528,16 +528,22 @@ class ChartView extends CompositeElement
         else
             @optionElements.chartOptionsPlainText.show()
             @optionElements.chartOptionsContainer.hide()
-            containerSpan = @optionElements.chartOptionsPlainText.find("span")
-            containerText = "#{@chartType}: "
-            textArray = []
+            do @updateChartOptionsPlainText
 
-            for shelfKey, index in @constructor.ORD_TO_AXIS_SHELF
-                varNames = do @shelves[shelfKey].getNames
-                if varNames.length > 0
-                    textArray.push "#{@constructor.ORD_TO_AXIS_NAME[index]} = #{varNames.join(", ")}"
-            containerSpan.text("#{containerText} #{textArray.join(", ")}")
+    updateChartOptionsPlainText: =>
+        seriesToColor = if @chart? then @chart.seriesToColor else {}
+        @optionElements.chartOptionsPlainText.find("span").remove()
+        span = "<span>#{@chartType}: "
+        textArray = []
 
+        for shelfKey, index in @constructor.ORD_TO_AXIS_SHELF
+            varNames = do @shelves[shelfKey].getNames
+            if varNames.length > 0
+                for vName, vIndex in varNames
+                    if seriesToColor[vName]?
+                        varNames[vIndex] = "<span style='color:#{seriesToColor[vName]}'>#{vName}</span>"
+                textArray.push "#{@constructor.ORD_TO_AXIS_NAME[index]} = #{varNames.join(", ")}"
+        @optionElements.chartOptionsPlainText.prepend("#{span} #{textArray.join(", ")} </span>")
 
     moveContainers: (toMoveIn) =>
         left = if toMoveIn then 0 else -600 # this should match left CSS value for containers
@@ -682,13 +688,14 @@ class ChartView extends CompositeElement
 
         # create and render the chart
         # TODO reuse the created chart?
-        chart = undefined
+        @chart = undefined
         for i in [0..numCharts-1]
-            chart = new chartClass @baseElement.find("div.small-multiple").eq(i), chartData[i], @chartOptions, properties,
+            @chart = new chartClass @baseElement.find("div.small-multiple").eq(i), chartData[i], @chartOptions, properties,
                 @optionElements # TODO don't pass optionElements, but listen to change events from @chartOptions
-            do chart.render
+            do @chart.render
 
-        @updateFixedAxisTitles numCharts, chart.axes[0].label, chart.axes[1].label
+        @updateFixedAxisTitles numCharts, @chart.axes[0].label, @chart.axes[1].label
+        do @updateChartOptionsPlainText
 
     updateFixedAxisTitles: (numCharts, xAxisTitle, yAxisTitle) =>
         # update fixed axis titles
