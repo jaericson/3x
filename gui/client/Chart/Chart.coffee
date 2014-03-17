@@ -226,20 +226,20 @@ class Chart
                     seriesLabel = null
 
                 # legend
-                if seriesLabel?
-                    i = seriesDataIds.length - 1
-                    #i = Math.round(Math.random() * i) # TODO find a better way to place labels
-                    d = seriesDataIds[i]
-                    x = xCoord(d)
-                    leftHandSide = x < @width/2
-                    inTheMiddle = false # @width/4 < x < @width*3/4
-                    @svg.append("text")
-                        .datum(d)
-                        .attr("transform", "translate(#{xCoord(d)},#{yCoord(d)})")
-                        .attr("x", if leftHandSide then 5 else -5).attr("dy", "-.5em")
-                        .style("text-anchor", if inTheMiddle then "middle" else if leftHandSide then "start" else "end")
-                        .style("fill", seriesColor)
-                        .text(seriesLabel)
+                # if seriesLabel?
+                #     i = seriesDataIds.length - 1
+                #     #i = Math.round(Math.random() * i) # TODO find a better way to place labels
+                #     d = seriesDataIds[i]
+                #     x = xCoord(d)
+                #     leftHandSide = x < @width/2
+                #     inTheMiddle = false # @width/4 < x < @width*3/4
+                #     @svg.append("text")
+                #         .datum(d)
+                #         .attr("transform", "translate(#{xCoord(d)},#{yCoord(d)})")
+                #         .attr("x", if leftHandSide then 5 else -5).attr("dy", "-.5em")
+                #         .style("text-anchor", if inTheMiddle then "middle" else if leftHandSide then "start" else "end")
+                #         .style("fill", seriesColor)
+                #         .text(seriesLabel)
 
                 colorSeries++
                 series++

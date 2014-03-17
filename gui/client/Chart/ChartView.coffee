@@ -493,6 +493,7 @@ class ChartView extends CompositeElement
             "triangle-down": "&#9660;"
             "triangle-up": "&#9650;"
 
+        legendContent = ""
         for shelfKey, index in @constructor.ORD_TO_AXIS_SHELF
             varNames = do @shelves[shelfKey].getNames
             if varNames.length > 0
@@ -503,17 +504,30 @@ class ChartView extends CompositeElement
                     if shelfKey is "PIVOT"
                         shapeVars = Object.keys(seriesToShape)
                         colorVars = Object.keys(seriesToColor)
-                        varNames[vIndex] = ""
+                        varNames[vIndex] = "<span id='pivotText'>"
                         for shapeVar in shapeVars
                             for colorVar in colorVars
                                 shape = shapesToUnicode[seriesToShape[shapeVar]]
                                 color = seriesToColor[colorVar]
                                 varNames[vIndex] += "<span style='color:#{color}'>#{shape}</span>"
-                        varNames[vIndex] += "<span> #{vName}</span>"
+                                legendContent += "<span style='color:#{color}'>#{shape} #{shapeVar} (#{colorVar})</span><br/>"
+                        varNames[vIndex] += "<span> #{vName}</span><span>"
                     else
                         varNames[vIndex] = "<span style='color:#{shapeColor}'>#{shape}</span><span style='color:#{textColor}'> #{vName}</span>"
                 textArray.push "#{@constructor.ORD_TO_AXIS_NAME[index]} = #{varNames.join(", ")}"
         @optionElements.chartOptionsPlainText.prepend("#{span} #{textArray.join(", ")} </span>")
+
+        # popover
+        @optionElements.chartOptionsPlainText.find("span#pivotText").popover(
+            trigger: "hover"
+            placement: "bottom"
+            title: "Legend"
+            content: legendContent
+            html: true
+            # container: @baseElement
+        )
+
+
 
     moveContainers: (toMoveIn) =>
         left = if toMoveIn then 0 else -600 # this should match left CSS value for containers
