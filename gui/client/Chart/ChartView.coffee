@@ -36,6 +36,10 @@ class ChartView extends CompositeElement
         @table.on "changed", @initializeAxes
         @table.on "updated", @display
 
+        @optionElements.chartOptionsPlainText.find("#change-settings-button").on("click", (e) =>
+            @showInteractiveMode true
+        )
+
         # if user resizes window, call display at most once every 100 ms
         $(window).resize(_.throttle @display, 100)
 
@@ -230,7 +234,7 @@ class ChartView extends CompositeElement
     @PIVOT_AXIS: 2
     @SMULT_AXIS: 3
     @ORD_TO_AXIS_SHELF: ["Y", "X", "PIVOT", "SMULT"]
-
+    @ORD_TO_AXIS_NAME: ["Y", "X", "Pivot", "Small Multiple"]
     
     # initialize @axes from @shelves (which is saved in local storage)
     initializeAxes: => 
@@ -366,10 +370,14 @@ class ChartView extends CompositeElement
                 names: chartTypes
             ))
 
+        
         @renderTargetsAndProjectiles axisCandidates, remainingVariables
         do @display
 
     renderTargetsAndProjectiles: (axisCandidates, remainingVariables) =>
+        # need to show this container to read DOM object dimensions
+        @optionElements.chartOptionsContainer.show()
+
         # add in projectile options and make them draggable
         for v in axisCandidates #remainingVariables
             v.isRatio = utils.isRatio v.type
@@ -407,8 +415,7 @@ class ChartView extends CompositeElement
             w = $(projectile).width()
             if w > maxWidth then maxWidth = w
         maxWidth += 14 # buffer room
-        targetNames = ["Y", "X", "Pivot", "Small Mult"]
-        targetNames = _.map(targetNames, (x) -> x + "=")
+        targetNames = _.map(@constructor.ORD_TO_AXIS_NAME, (x) -> x + "=")
 
         targetTableData = []
         for name in targetNames
@@ -511,12 +518,25 @@ class ChartView extends CompositeElement
         h = $("#chart-options-projectiles").height()
         $("#chart-options-background").css("height", h)
 
-        # @varX      = @vars[@constructor.X_AXIS_ORDINAL]
-        # # pivot variables in an array if there are additional nominal variables
-        # @varsPivot = (ax for ax,ord in @vars when ord isnt @constructor.X_AXIS_ORDINAL and utils.isNominal ax.type)
-        # # y-axis variables in an array
-        # # TODO: there should only be 1 y-axis variable for now
-        # @varsY
+        if @optionElements.chartOptionsPlainText.css("display") isnt "none"
+            @showInteractiveMode false
+
+    showInteractiveMode: (show) =>
+        if show
+            @optionElements.chartOptionsPlainText.hide()
+            @optionElements.chartOptionsContainer.show()
+        else
+            @optionElements.chartOptionsPlainText.show()
+            @optionElements.chartOptionsContainer.hide()
+            containerSpan = @optionElements.chartOptionsPlainText.find("span")
+            containerText = "#{@chartType}: "
+            textArray = []
+
+            for shelfKey, index in @constructor.ORD_TO_AXIS_SHELF
+                varNames = do @shelves[shelfKey].getNames
+                if varNames.length > 0
+                    textArray.push "#{@constructor.ORD_TO_AXIS_NAME[index]} = #{varNames.join(", ")}"
+            containerSpan.text("#{containerText} #{textArray.join(", ")}")
 
 
     moveContainers: (toMoveIn) =>
@@ -557,6 +577,8 @@ class ChartView extends CompositeElement
             })
 
     hideProjectiles: =>
+        @showInteractiveMode false
+
         @optionElements.chartOptionsContainer.find(".chart-options-moveme:not(.isOnTarget)").animate({
                 opacity: 0.0
             }, {
